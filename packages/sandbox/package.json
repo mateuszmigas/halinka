@@ -1,0 +1,28 @@
+{
+  "name": "@halinka/sandbox",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test:unit": "vitest run --passWithNoTests --exclude '**/*.docker.test.ts'",
+    "test:docker": "vitest run docker.test"
+  },
+  "devDependencies": {
+    "@halinka/config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "typescript": "~7.0.2",
+    "vitest": "^5.0.3"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./host": "./src/host.ts",
+    "./devcontainer": "./src/devcontainer.ts",
+    "./testing": "./src/testing/index.ts"
+  },
+  "dependencies": {
+    "@devcontainers/cli": "0.89.0",
+    "@halinka/utils": "workspace:*",
+    "yaml": "^2.9.1"
+  }
+}

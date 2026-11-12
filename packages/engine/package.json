@@ -1,0 +1,26 @@
+{
+  "name": "@halinka/engine",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@halinka/agents": "workspace:*",
+    "@halinka/protocol": "workspace:*",
+    "@halinka/sandbox": "workspace:*",
+    "@halinka/utils": "workspace:*",
+    "@halinka/workflow": "workspace:*"
+  },
+  "devDependencies": {
+    "@halinka/config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "typescript": "~7.0.2",
+    "vitest": "^5.0.3"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

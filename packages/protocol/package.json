@@ -1,0 +1,31 @@
+{
+  "name": "@halinka/protocol",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@halinka/workflow": "workspace:*",
+    "birpc": "^4.2.0",
+    "ws": "^8.21.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@halinka/config": "workspace:*",
+    "@halinka/utils": "workspace:*",
+    "@types/node": "^24.19.2",
+    "@types/ws": "^8.18.2",
+    "typescript": "~7.0.2",
+    "vitest": "^5.0.3"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./inMemoryTransport": "./src/inMemoryTransport.ts",
+    "./keys": "./src/keys.ts",
+    "./testing": "./src/testing.ts",
+    "./webSocket": "./src/webSocket/index.ts"
+  }
+}

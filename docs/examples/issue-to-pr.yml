@@ -1,0 +1,74 @@
+# Copy this file to .halinka/workflows/issue-to-pr.yml in a `github` repo.
+# The label `halinka` on an issue, or a comment that starts with /halinka, starts a run. A team member must do it.
+#
+# A run from GitHub is untrusted, so it needs a container:
+# - Commit a devcontainer, and name it in .halinka/config.yml with `devcontainer: <path>`.
+# - Use a runner with Docker that runs workflows in a devcontainer.
+# - Give keys for both agents on the Agents page: claude-code and codex use different keys.
+# Change the command of the `tests` gate to the tests of your repo.
+#
+# Anyone can write the text of an issue, and the agent reads it with the key of the member who started the run. Halinka marks the
+# text as data, and the container is the boundary, but the text can still change what the agent does. Read the issue before you
+# add the label or write the comment. At the approval, read the diff itself, not only the review of the agent.
+schema_version: 1
+name: Issue to PR
+
+inputs:
+  issue_number: { type: number, required: true, description: The issue to implement }
+  issue_title: { type: string, default: "" }
+  issue_body: { type: string, default: "" }
+
+on:
+  issues:
+    types: [labeled]
+    labels: [halinka]
+    inputs:
+      issue_number: ${{ event.issue.number }}
+      issue_title: ${{ event.issue.title }}
+      issue_body: ${{ event.issue.body ?? '' }}
+  issue_comment:
+    starts_with: /halinka
+    inputs:
+      issue_number: ${{ event.issue.number }}
+      issue_title: ${{ event.issue.title }}
+      issue_body: ${{ event.issue.body ?? '' }}
+
+branch:
+  name: halinka/issue-${{ inputs.issue_number }}
+
+steps:
+  - id: fix_loop
+    type: loop
+    max_iterations: 3
+    until: ${{ steps.code_review.outcome == 'approve' }}
+    steps:
+      - id: implement
+        type: agent
+        agent: claude-code
+        prompt: |
+          Implement issue #${{ inputs.issue_number }}.
+          Title: ${{ inputs.issue_title }}
+          Text: ${{ inputs.issue_body }}
+          Review findings: ${{ loop.previous.code_review.summary ?? 'none' }}
+        gates:
+          - name: tests
+            run: pnpm test
+
+      - id: code_review
+        type: agent
+        agent: codex
+        permissions: { write: false }
+        prompt: Review the branch diff against its base. Report only blocking issues.
+        outcomes: [approve, changes_requested]
+
+  - id: approve
+    type: approval
+    message: Review the diff of issue ${{ inputs.issue_number }}
+    reviewers: [code_review]
+
+  - id: open_pr
+    type: github
+    action: open_pull_request
+    title: ${{ inputs.issue_title }}
+    body: ${{ steps.implement.summary }}
+    closes: ${{ inputs.issue_number }}

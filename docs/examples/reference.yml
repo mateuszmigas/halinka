@@ -1,0 +1,107 @@
+# Every key of a workflow, with a short note. Copy issue-to-pr.yml or pr-review.yml for a real workflow.
+# A github step: open_pull_request needs no on.pull_request; comment_on_pull_request needs it (see pr-review.yml).
+schema_version: 1 # required; for an older file, run halinka migrate --write
+name: Reference
+
+inputs: # string (default), number or boolean; required or default, not both
+  issue_number: { type: number, required: true, description: The issue to implement }
+  title: { type: string, default: "" }
+  dry_run: { type: boolean, default: false }
+
+on: # a github repo starts runs from these; the manual form always exists
+  issues:
+    types: [opened, reopened, labeled]
+    labels: [halinka] # the added label for labeled, else a label of the issue
+    inputs:
+      issue_number: ${{ event.issue.number }}
+      title: ${{ event.issue.title }}
+  issue_comment:
+    starts_with: /halinka # an exact prefix of a new comment on an issue
+    inputs:
+      issue_number: ${{ event.issue.number }}
+      title: ${{ event.comment.body ?? '' }} # a body can be null
+  cron:
+    schedule: "0 6 * * 1-5" # minute hour day month weekday, in UTC
+    inputs: # fixed values: a schedule has no event
+      issue_number: "1"
+
+branch:
+  name: halinka/issue-${{ inputs.issue_number }} # a template of inputs; default halinka/run-<id>
+
+runs-on: [gpu] # labels that the runner must have
+
+max_cost_usd: 20 # the budget of the run; past it the run fails with no item
+
+concurrency:
+  group: issue-${{ inputs.issue_number }} # one run of the group at a time, per repo
+  # cancel_in_progress: true   # a new run cancels the earlier runs of the group; not with branch
+
+steps:
+  - id: prepare
+    type: shell
+    if: ${{ inputs.dry_run == false }} # a boolean expression; a skipped step reads as skipped
+    run: pnpm install --frozen-lockfile # no ${{ }} here
+    network: [registry.npmjs.org] # false (default), true, or host names
+    timeout: 10m # a whole number and s, m or h
+
+  - id: fix_loop
+    type: loop
+    max_iterations: 3 # reached: the loop fails
+    until: ${{ steps.code_review.outcome == 'approve' }} # checked after each full iteration
+    max_cost_usd: 15 # a child gets at most the remainder
+    timeout: 2h # agent time of the children
+    steps:
+      - id: implement
+        type: agent
+        agent: claude-code
+        model: claude-opus-5-5 # default: the Agents page, then the agent's own
+        prompt: |
+          Implement issue #${{ inputs.issue_number }}: ${{ inputs.title }}
+          Review findings: ${{ loop.previous.code_review.outputs.findings ?? 'none' }}
+        permissions:
+          write: true # default; false discards changes and fails the step on a change
+          shell: true # default; false is refused for codex
+          network: [api.github.com] # the agent always reaches its provider hosts
+        tools: [Read, Edit, Bash] # the agent's own names; must agree with permissions; codex takes none
+        mcp_servers: # stdio only, started in the sandbox as the agent user; no env
+          - { name: docs, command: docs-server, args: [--stdio] }
+        require_changes: true # default for a step that writes; a problem with write: false
+        max_reminders: 2 # default; prompts again when the turn ends with no report
+        max_attempts: 4 # default 3; failed gate attempts before on_exhausted
+        max_turns: 30 # prompts that Halinka sends the agent in the step
+        timeout: 45m # agent time per session
+        max_cost_usd: 5 # per session; claude-code only
+        on_exhausted: ask_human # default; or fail
+        gates:
+          - name: tests
+            run: pnpm test # against the checkpoint, in the sandbox
+            network: false
+            on_fail: retry # default; or ask_human, fail
+        outcomes: # a list, or a map to ok or fail
+          done: ok
+          blocked: fail
+        outputs: # typed; every field is required
+          summary_lines: { type: array, items: string }
+          stats: { files: number, tested: boolean }
+
+      - id: code_review
+        type: agent
+        agent: claude-code # codex reports no cost, so a workflow with max_cost_usd cannot use it
+        permissions: { write: false } # gives reviewed_commit
+        prompt: Review the branch diff against its base. Report only blocking issues.
+        outcomes: [approve, changes_requested]
+        outputs:
+          findings: { type: array, items: { file: string, line: number, message: string } }
+
+  - id: approve
+    type: approval
+    message: Review the diff of issue ${{ inputs.issue_number }} # plain text to a person
+    reviewers: [code_review] # write: false steps whose reviewed_commit must be the branch head
+
+  - id: open_pr
+    type: github
+    action: open_pull_request # output pull_request_url
+    title: ${{ inputs.title }} # one line, cut at 256; empty gives "<workflow name> (Halinka run #<id>)"
+    body: ${{ steps.implement.summary }} # in a code fence: GitHub acts on no mention, issue keyword or link
+    closes: ${{ inputs.issue_number }} # one ${{ }} of a number; adds "Closes #<number>" after the fence
+    timeout: 10m # default

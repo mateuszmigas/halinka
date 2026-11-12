@@ -1,0 +1,11 @@
+{
+  "extends": "@halinka/config/tsconfig.react.json",
+  "compilerOptions": {
+    "types": ["node", "vite/client"],
+    "paths": {
+      "@halinka/ui/*": ["../../packages/ui/src/*"]
+    }
+  },
+  "include": ["."],
+  "exclude": ["node_modules", "dist"]
+}

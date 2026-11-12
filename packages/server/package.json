@@ -1,0 +1,46 @@
+{
+  "name": "@halinka/server",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test:unit": "vitest run --passWithNoTests --exclude '**/*.docker.test.ts'",
+    "test:docker": "vitest run docker.test",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@halinka/presets": "workspace:*",
+    "@halinka/protocol": "workspace:*",
+    "@halinka/utils": "workspace:*",
+    "@halinka/workflow": "workspace:*",
+    "@hono/node-server": "^2.1.6",
+    "@orpc/client": "1.15.7",
+    "@orpc/contract": "1.15.7",
+    "@orpc/json-schema": "1.15.7",
+    "@orpc/openapi": "1.15.7",
+    "@orpc/openapi-client": "1.15.7",
+    "@orpc/server": "1.15.7",
+    "@orpc/zod": "1.15.7",
+    "better-auth": "^1.7.15",
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.16",
+    "pg": "^8.23.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@halinka/config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.11",
+    "typescript": "~7.0.2",
+    "vitest": "^5.0.3"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts"
+  }
+}

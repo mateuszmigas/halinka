@@ -1,0 +1,24 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "agentGuidance": false,
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "check-types": {
+      "dependsOn": ["^check-types"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md", "!**/*.tsbuildinfo"],
+      "outputs": ["**/*.tsbuildinfo"]
+    },
+    "test:unit": {
+      "dependsOn": ["^test:unit"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md", "!**/*.tsbuildinfo"],
+      "cache": true
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

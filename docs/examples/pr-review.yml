@@ -1,0 +1,33 @@
+# Review each pull request of a branch of this repo. A new push cancels the older review.
+schema_version: 1
+name: Review a pull request
+
+inputs:
+  pr_number: { type: number, required: true }
+  title: { type: string, required: true }
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    inputs:
+      pr_number: ${{ event.pull_request.number }}
+      title: ${{ event.pull_request.title }}
+
+concurrency:
+  group: pr-review-${{ inputs.pr_number }}
+  cancel_in_progress: true
+
+steps:
+  - id: review
+    type: agent
+    agent: claude-code
+    permissions: { write: false }
+    prompt: |
+      Review the changes of this branch against the default branch. The title of the pull request is:
+      ${{ inputs.title }}
+      Report your findings in one short summary.
+
+  - id: report
+    type: github
+    action: comment_on_pull_request
+    body: ${{ steps.review.summary }}

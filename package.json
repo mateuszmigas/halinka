@@ -1,0 +1,42 @@
+{
+  "name": "halinka-workspace",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "turbo dev --env-mode=loose --filter=halinka --filter=@halinka/portal",
+    "start": "node --import tsx apps/cli/src/main.ts start",
+    "halinka": "node --import tsx apps/cli/src/main.ts",
+    "db:generate": "pnpm --filter @halinka/server db:generate",
+    "db:migrate": "pnpm --filter @halinka/server db:migrate",
+    "db:studio": "pnpm --filter @halinka/server db:studio",
+    "format": "oxfmt",
+    "format-and-lint": "oxfmt --check && oxlint",
+    "format-and-lint:fix": "oxfmt && oxlint --fix",
+    "check-types": "turbo check-types",
+    "test:unit": "turbo test:unit",
+    "test:e2e": "pnpm --filter @halinka/e2e test:e2e",
+    "test:pack": "pnpm --filter @halinka/e2e test:pack",
+    "test:image": "pnpm --filter @halinka/e2e test:image",
+    "test:docker": "pnpm --filter @halinka/sandbox --filter @halinka/runner --filter @halinka/server test:docker",
+    "validate": "pnpm format-and-lint && pnpm check-types && pnpm test:unit",
+    "validate:fix": "pnpm format-and-lint:fix && pnpm check-types && pnpm test:unit"
+  },
+  "author": "Mateusz Migas",
+  "license": "AGPL-3.0-only",
+  "engines": {
+    "node": ">=24.20.0",
+    "pnpm": ">=12.5.1"
+  },
+  "packageManager": "pnpm@12.5.1",
+  "devDependencies": {
+    "@halinka/config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "oxfmt": "0.70.0",
+    "oxlint": "1.86.0",
+    "oxlint-tsgolint": "7.0.2003",
+    "tsx": "^4.23.15",
+    "turbo": "^2.11.6",
+    "typescript": "~7.0.2"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "halinka-website",
+  "compatibility_date": "2026-10-07",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page",
+  },
+  "routes": [{ "pattern": "halinka.dev", "custom_domain": true }],
+  "workers_dev": false,
+  "preview_urls": false,
+}

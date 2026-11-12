@@ -1,0 +1,53 @@
+# The server with Postgres on a VPS. Copy .env.template to .env, fill it in, then:
+#   docker compose -f infrastructure/docker-compose.yml up -d --build
+# The port is on localhost only. Put a reverse proxy with TLS in front of it.
+name: halinka
+
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: halinka
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: halinka
+    volumes:
+      - db_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U halinka"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://halinka:${POSTGRES_PASSWORD}@db:5432/halinka
+      HALINKA_PUBLIC_URL: ${HALINKA_PUBLIC_URL:?Set HALINKA_PUBLIC_URL}
+      HALINKA_AUTH_SECRET: ${HALINKA_AUTH_SECRET:?Set HALINKA_AUTH_SECRET}
+      HALINKA_MASTER_KEY: ${HALINKA_MASTER_KEY:?Set HALINKA_MASTER_KEY}
+      HALINKA_GITHUB_CLIENT_ID: ${HALINKA_GITHUB_CLIENT_ID:?Set HALINKA_GITHUB_CLIENT_ID}
+      HALINKA_GITHUB_CLIENT_SECRET: ${HALINKA_GITHUB_CLIENT_SECRET:?Set HALINKA_GITHUB_CLIENT_SECRET}
+      HALINKA_ADMIN_GITHUB: ${HALINKA_ADMIN_GITHUB:?Set HALINKA_ADMIN_GITHUB}
+      HALINKA_TRUSTED_PROXY: ${HALINKA_TRUSTED_PROXY:?Set HALINKA_TRUSTED_PROXY}
+    volumes:
+      - home_data:/data
+    ports:
+      - "127.0.0.1:${HALINKA_PORT:-7070}:7070"
+
+# A fixed subnet, so HALINKA_TRUSTED_PROXY stays right after the network is made again.
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+
+volumes:
+  db_data:
+  home_data:

@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+**/.env
+.git
+**/.env.*
+!**/.env.template
+**/.turbo
+**/*.tsbuildinfo
+.claude
+e2e/test-results
+e2e/playwright-report

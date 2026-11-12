@@ -1,0 +1,42 @@
+{
+  "name": "@halinka/portal",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "check-types": "tsc --noEmit",
+    "test:unit": "vitest run"
+  },
+  "dependencies": {
+    "@halinka/presets": "workspace:*",
+    "@halinka/server": "workspace:*",
+    "@halinka/ui": "workspace:*",
+    "@halinka/utils": "workspace:*",
+    "@halinka/workflow": "workspace:*",
+    "@orpc/client": "1.15.7",
+    "@orpc/tanstack-query": "1.15.7",
+    "@tanstack/react-form": "^1.33.5",
+    "@tanstack/react-query": "^5.104.5",
+    "@tanstack/react-router": "^1.170.45",
+    "@tanstack/react-virtual": "^3.14.26",
+    "lucide-react": "^1.60.0",
+    "monaco-editor": "0.57.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "recharts": "3.8.0"
+  },
+  "devDependencies": {
+    "@halinka/config": "workspace:*",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~7.0.2",
+    "vite": "^8.3.2",
+    "vitest": "^5.0.3"
+  }
+}

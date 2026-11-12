@@ -1,0 +1,11 @@
+packages:
+  - apps/*
+  - packages/*
+  - e2e
+allowBuilds:
+  cpu-features: false
+  esbuild: true
+  ssh2: false
+  workerd: true
+minimumReleaseAgeExclude:
+  - "@types/node@24.19.2"

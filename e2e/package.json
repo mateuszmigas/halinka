@@ -1,0 +1,23 @@
+{
+  "name": "@halinka/e2e",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test:e2e": "playwright test --project=cli --project=portal",
+    "test:pack": "playwright test --project=pack",
+    "test:image": "playwright test --project=image"
+  },
+  "devDependencies": {
+    "@halinka/agents": "workspace:*",
+    "@halinka/config": "workspace:*",
+    "@halinka/presets": "workspace:*",
+    "@halinka/runner": "workspace:*",
+    "@halinka/sandbox": "workspace:*",
+    "@halinka/utils": "workspace:*",
+    "@playwright/test": "^1.64.0",
+    "@types/node": "^24.19.2",
+    "typescript": "~7.0.2"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "extends": "@halinka/config/tsconfig.react.json",
+  "compilerOptions": {
+    "paths": {
+      "@halinka/ui/*": ["./src/*"]
+    }
+  },
+  "include": ["."],
+  "exclude": ["node_modules", "dist"]
+}

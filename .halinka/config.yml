@@ -1,0 +1,6 @@
+schema_version: 1
+server: local
+devcontainer: .devcontainer/devcontainer.json
+setup:
+  network: [registry.npmjs.org]
+  run: pnpm install --frozen-lockfile

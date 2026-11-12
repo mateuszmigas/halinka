@@ -1,0 +1,3 @@
+{
+  "extends": "@halinka/config/tsconfig.base.json"
+}

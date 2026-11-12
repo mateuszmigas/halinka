@@ -1,0 +1,26 @@
+.DS_Store
+
+node_modules
+dist
+
+# Environment files
+**/.env
+**/.env.*
+!**/.env.template
+
+# tsbuildinfo
+*.tsbuildinfo
+
+# Cloudflare Workers build
+.wrangler/
+
+# Turborepo
+.turbo
+
+# Personal agent configuration and worktrees
+.claude/settings.local.json
+.claude/worktrees/
+
+# Playwright run artifacts
+test-results/
+playwright-report/

@@ -1,0 +1,6 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "sortImports": true,
+  "sortPackageJson": false,
+  "ignorePatterns": ["pnpm-lock.yaml", "**/*.svg", "**/*.md"]
+}
