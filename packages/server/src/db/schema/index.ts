@@ -18,6 +18,7 @@ export * from "./runnerEnrollments";
 export * from "./runnerKeys";
 export * from "./runners";
 export * from "./serverIdentities";
+export * from "./serverSettings";
 export * from "./sessions";
 export { sandboxKind } from "./shared";
 export * from "./stepAttempts";

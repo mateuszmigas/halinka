@@ -24,6 +24,7 @@ import { WorkflowPage } from "./repos/workflowPage";
 import { RunnersPage } from "./runners/runnersPage";
 import { RunPage } from "./runs/runPage";
 import { RunsPage } from "./runs/runsPage";
+import { ServerSettingsPage } from "./serverSettings/serverSettingsPage";
 import { WorkflowsPage } from "./workflows/workflowsPage";
 
 const rootRoute = createRootRoute({ component: Layout });
@@ -111,6 +112,12 @@ const membersRoute = createRoute({
   component: MembersPage,
 });
 
+const serverSettingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/server",
+  component: ServerSettingsPage,
+});
+
 const gitHubRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/github",
@@ -188,6 +195,7 @@ export const router = createRouter({
     membersRoute,
     gitHubRoute,
     gitHubCreatedRoute,
+    serverSettingsRoute,
     cliLoginRoute,
     terminalsRoute,
   ]),

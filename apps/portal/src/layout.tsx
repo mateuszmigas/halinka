@@ -26,6 +26,7 @@ import {
   ListChecksIcon,
   PlusIcon,
   ServerIcon,
+  SlidersHorizontalIcon,
   TerminalIcon,
   UsersIcon,
   WorkflowIcon,
@@ -120,6 +121,7 @@ export const Layout = () => {
                 <NavItem to="/runners" icon={ServerIcon} label="Runners" />
                 <NavItem to="/agents" icon={BotIcon} label="Agents" />
                 {isAdmin && <NavItem to="/github" icon={GitBranchIcon} label="GitHub" />}
+                {isAdmin && <NavItem to="/server" icon={SlidersHorizontalIcon} label="Server" />}
                 {loggedInUser && <NavItem to="/terminals" icon={TerminalIcon} label="Terminals" />}
               </NavGroup>
               <NavGroup title="Team">

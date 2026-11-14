@@ -240,6 +240,15 @@ servers never meet. A reconnect that finds another id ends the connection, and t
 `halinka start` print the id. A database reset gives a new, empty scope: no sweep removes the old one; a person deletes
 its folders and containers.
 
+## Server settings
+
+`server_settings` holds one row with a typed column per setting and SQL defaults. The server makes the row at its first
+start. `ServerSettings.load` reads it after `openDb`, and the services read the one instance. `values` gives the
+settings in their API names. `ServerSettingsService` writes the row, then sets `ServerSettings`, one write at a time. One server runs on a
+database, so no other process changes the row.
+Admins change the settings on the Server page of the portal (`serverSettings.update`). The zod input schema of the
+contract holds the range rules. The first setting is the update check (`isUpdateCheckOn`, on by default).
+
 ## Package build
 
 - `apps/cli` is the package `halinka`; the root is `halinka-workspace`, because pnpm cannot have two projects with one

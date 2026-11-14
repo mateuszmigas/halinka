@@ -18,6 +18,7 @@ import { RunnerEnrollmentRepository } from "./runnerEnrollmentRepository";
 import { RunnerKeyRepository } from "./runnerKeyRepository";
 import { RunnerRepository } from "./runnerRepository";
 import { ServerIdentityRepository } from "./serverIdentityRepository";
+import { ServerSettingRepository } from "./serverSettingRepository";
 import { StepAttemptRepository } from "./stepAttemptRepository";
 import { StepRunRepository } from "./stepRunRepository";
 import { UserRepository } from "./userRepository";
@@ -44,6 +45,7 @@ export const createRepositories = (db: Db) => ({
   runnerKey: new RunnerKeyRepository(db),
   runner: new RunnerRepository(db),
   serverIdentity: new ServerIdentityRepository(db),
+  serverSetting: new ServerSettingRepository(db),
   stepAttempt: new StepAttemptRepository(db),
   stepRun: new StepRunRepository(db),
   user: new UserRepository(db),

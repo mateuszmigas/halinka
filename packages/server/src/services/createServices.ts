@@ -6,6 +6,7 @@ import { createRepositories } from "../db/repositories";
 import type { RunBus } from "../runBus";
 import type { RunnerPackage } from "../runnerPackage";
 import type { SecretCipher } from "../secrets";
+import type { ServerSettings } from "../serverSettings";
 import { AgentService } from "./agentService";
 import { CliLoginService } from "./cliLoginService";
 import { GitHubAppService } from "./githubAppService";
@@ -18,6 +19,7 @@ import { RepoService } from "./repoService";
 import { RunnerService } from "./runnerService";
 import { RunService } from "./runService";
 import { ScheduleService } from "./scheduleService";
+import { ServerSettingsService } from "./serverSettingsService";
 import { TriggerService } from "./triggerService";
 
 type ServicesOptions = {
@@ -29,6 +31,7 @@ type ServicesOptions = {
   bus: RunBus;
   localRunnerId: () => number | undefined;
   cipher: SecretCipher;
+  serverSettings: ServerSettings;
 };
 
 export const createServices = ({
@@ -40,6 +43,7 @@ export const createServices = ({
   bus,
   localRunnerId,
   cipher,
+  serverSettings,
 }: ServicesOptions) => {
   const repositories = createRepositories(db);
   const gitHubApp = new GitHubAppService(db, repositories, cipher);
@@ -83,6 +87,7 @@ export const createServices = ({
       bus,
     }),
     schedule: new ScheduleService(repositories, repo, run),
+    serverSettings: new ServerSettingsService(repositories, serverSettings),
   };
 };
 

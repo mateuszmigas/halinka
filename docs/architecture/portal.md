@@ -66,6 +66,7 @@ shadcn on Base UI (`@halinka/ui`).
   a runner. A sheet at the side edits a thing that exists: Edit runner.
 - The GitHub page is one Setup panel with three steps: create the App, install it, link the repos. A step is done from
   the status of the server (an App, an installation, a linked repo), and the next step is open.
+- The Server page (`/server`, Admins only) holds the server settings, for example the update check.
 - Each form field goes through `FieldFrame` (label, description, issues) or `SelectField`. `FieldFrame` gives the `id` and
   `aria-invalid` to its control through a render prop, because the child can be a wrapper of the control. The `id` is
   the field name, with a prefix only when two forms of one page can have the same field name.

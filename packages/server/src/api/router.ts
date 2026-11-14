@@ -132,6 +132,12 @@ export const router = api.router({
       context.services.member.delete(input.id),
     ),
   },
+  serverSettings: {
+    get: admin.serverSettings.get.handler(({ context }) => context.services.serverSettings.get()),
+    update: admin.serverSettings.update.handler(({ input, context }) =>
+      context.services.serverSettings.update(input),
+    ),
+  },
   repos: {
     list: member.repos.list.handler(({ context }) => context.services.repo.list()),
     secrets: member.repos.secrets.handler(({ input, context }) =>

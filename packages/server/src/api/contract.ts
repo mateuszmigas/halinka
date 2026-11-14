@@ -396,6 +396,9 @@ const secretValueSchema = z
 
 const repoSecretInputSchema = idInputSchema.extend({ name: secretNameSchema });
 
+// `isUpdateCheckOn`: the server reads the latest version from the npm registry.
+const serverSettingsSchema = z.object({ isUpdateCheckOn: z.boolean() });
+
 export const contract = {
   health: oc.route({ method: "GET", path: "/health" }).output(z.object({ ok: z.literal(true) })),
   session: oc.route({ method: "GET", path: "/session" }).output(
@@ -531,6 +534,14 @@ export const contract = {
       .errors(errors("BAD_REQUEST", "NOT_FOUND", "CONFLICT"))
       .input(idInputSchema)
       .output(z.object({ id: z.number() })),
+  },
+  serverSettings: {
+    get: oc.route({ method: "GET", path: "/server-settings" }).output(serverSettingsSchema),
+    update: oc
+      .route({ method: "PATCH", path: "/server-settings" })
+      .errors(errors("BAD_REQUEST"))
+      .input(serverSettingsSchema.partial())
+      .output(serverSettingsSchema),
   },
   repos: {
     list: oc.route({ method: "GET", path: "/repos" }).output(z.array(repoSchema)),

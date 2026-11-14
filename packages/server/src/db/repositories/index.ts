@@ -17,6 +17,7 @@ export { isPassingRefusal } from "./dispatchRule";
 export * from "./runnerKeyRepository";
 export * from "./runnerRepository";
 export * from "./serverIdentityRepository";
+export * from "./serverSettingRepository";
 export * from "./stepAttemptRepository";
 export * from "./stepRunRepository";
 export * from "./userRepository";

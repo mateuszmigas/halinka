@@ -10,6 +10,10 @@ per step.
 
 ## Nice to have
 
+- A Member who opens an admin page (`/server`, `/github`) sees "Loading…" for about 7 s before "Only an Admin can do
+  this". `FORBIDDEN` of the `admin` middleware is not a declared error, so the retry rule of `main.tsx` asks 4 times.
+  Do not retry `FORBIDDEN`, as for `UNAUTHORIZED`.
+
 - Run list paging, from the review:
   - The Runs page polls only while one page is loaded, because each poll reads every loaded page again. A person
     who scrolled sees no new runs. Add a `changedSince` input (by `updated_at`) and merge its runs into the loaded

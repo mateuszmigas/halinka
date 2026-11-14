@@ -33,6 +33,7 @@ import { keyRefusalReason, keyRetiredReason, noAuthorityReason } from "./runnerA
 import { readRunnerPackage } from "./runnerPackage";
 import { workflowRunIdOfSshPath } from "./runSshPath";
 import { SecretCipher } from "./secrets";
+import { ServerSettings } from "./serverSettings";
 import { createServices, type Services } from "./services";
 import { sweep } from "./sweep";
 
@@ -122,6 +123,7 @@ export class Server implements RunnerAcceptor {
     const repositories = createRepositories(db);
     await repositories.workflowRun.extendLeases(this.leaseTimes.leaseSeconds);
     const serverId = await repositories.serverIdentity.findOrCreate();
+    const serverSettings = await ServerSettings.load(repositories);
     const bus = new RunBus();
     const connectedRunners = {
       commandsOf: (id: number) => this.sessionsOf(id).map(({ commands }) => commands),
@@ -140,6 +142,7 @@ export class Server implements RunnerAcceptor {
       bus,
       localRunnerId: () => this.localRunnerId,
       cipher: this.cipher,
+      serverSettings,
     });
     const betterAuth = auth && createAuth(db, services.member, auth);
     const app = createApp(services, {

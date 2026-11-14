@@ -25,6 +25,7 @@ import { defaultLeaseTimes } from "../leaseTimes";
 import { RunBus } from "../runBus";
 import type { RunnerPackage } from "../runnerPackage";
 import { SecretCipher } from "../secrets";
+import { ServerSettings } from "../serverSettings";
 import { createServices } from "../services";
 import { hubot, logIn, octo, testAuthConfig } from "./testAuth";
 import { registerTestRunner, testKeyOf } from "./testDb";
@@ -219,6 +220,7 @@ export const createTestServer = async (
   const services = createServices({
     db,
     build: testBuild,
+    serverSettings: await ServerSettings.load(createRepositories(db)),
     publicUrl: testApiUrl,
     ...(options.runnerPackage && { runnerPackage: options.runnerPackage }),
     connectedRunners,

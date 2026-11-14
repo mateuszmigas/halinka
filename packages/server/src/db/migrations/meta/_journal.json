@@ -36,6 +36,13 @@
       "when": 1794511538943,
       "tag": "0004_workflow_runs_created_at",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794662827361,
+      "tag": "0005_server_settings",
+      "breakpoints": true
     }
   ]
 }

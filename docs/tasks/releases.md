@@ -14,22 +14,17 @@ in [overview.md](../architecture/overview.md#decisions).
   `--platform=$BUILDPLATFORM`.
 - A Compose file with `image:`, so that an update is `docker compose pull` and `up -d`. Today it has only `build:`.
   Update `docs/user/vps.md`.
-- The server reads the latest version and its `protocolVersion` from the npm registry. A setting turns this off; it is
-  on by default. Admins see a banner with the version and the commands: back up, `docker compose pull`, `up -d`. When
-  the protocol changes, the banner says that each runner stops its runs and updates.
-- `halinka start`: the same banner, with "Restart with `npx halinka@latest start`". An unpinned `npx halinka` can use a
-  cached old version.
+- The server reads the latest version and its `protocolVersion` from the npm registry, when the update check is on
+  (`ServerSettings.values`, [overview.md](../architecture/overview.md#server-settings)). Admins see a banner with the
+  version and the commands: back up, `docker compose pull`, `up -d`. When the protocol changes, the banner says that
+  each runner stops its runs and updates.
+- `halinka start`: the same banner (it reads the `ServerSettings` of its server), with "Restart with
+  `npx halinka@latest start`". An unpinned `npx halinka` can use a cached old version.
 - A snapshot stores its `schema_version` ([workflows.md](../architecture/workflows.md#decisions)): a column on
   `workflow_snapshots` with a backfill of 1. The claim fails a run with an older version and reopen refuses it. A
   `schemaVersion` change also changes `protocolVersion`. A test: a stored `resolved` of each released version parses
   with `workflowSchema` (a new zod `.default()` changes `resolved` with no version change). Pages of finished runs read
   only `id`, `type` and loop children of `resolved`.
-- Server settings in the database ([overview.md](../architecture/overview.md#decisions)), with a page for admins in
-  the Settings group of the portal. The first setting is the update check (on by default); `halinka start` reads it.
-  - A `server_settings` table with one row and a typed column per setting, with SQL defaults (the one-row pattern of
-    `server_identities`). The server loads the row after `openDb` and holds it in one class; the settings service
-    writes the row, then sets the class. Range rules go in the zod input schema of the contract. Lease and sweep stay
-    environment variables.
 
 ## Checks
 

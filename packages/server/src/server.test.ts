@@ -372,6 +372,19 @@ describe("Server", () => {
     expect((await second.accept("second")).serverId).toBe(serverId);
   });
 
+  it("keeps the server settings across two starts on one database", async () => {
+    const dbLocation = await createDataFolder();
+    const first = await setUp({ dbLocation });
+    await createApiClient(first.server.url).serverSettings.update({ isUpdateCheckOn: false });
+    await first.server.stop();
+
+    const second = await setUp({ dbLocation });
+
+    expect(await createApiClient(second.server.url).serverSettings.get()).toEqual({
+      isUpdateCheckOn: false,
+    });
+  });
+
   it("gives another server id to another database", async () => {
     const first = await setUp();
     const { serverId } = await first.accept("first");

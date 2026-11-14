@@ -10,6 +10,7 @@ import { ReposPage } from "./pages/reposPage";
 import { RunnersPage } from "./pages/runnersPage";
 import { RunPage } from "./pages/runPage";
 import { RunsPage, startRunFrom, type StartRunOptions } from "./pages/runsPage";
+import { ServerSettingsPage } from "./pages/serverSettingsPage";
 
 export class TestPortal {
   constructor(
@@ -49,6 +50,11 @@ export class TestPortal {
   async openCosts() {
     await this.page.goto(`${this.server.url}/costs`);
     return new CostsPage(this.page);
+  }
+
+  async openServerSettings() {
+    await this.page.goto(`${this.server.url}/server`);
+    return new ServerSettingsPage(this.page);
   }
 
   async openRunners() {
