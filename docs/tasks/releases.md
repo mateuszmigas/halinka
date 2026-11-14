@@ -12,8 +12,6 @@ in [overview.md](../architecture/overview.md#decisions).
   `/app/halinka.tgz` of the image build, not a second `pnpm pack` on the workflow host (another build can give
   another build id). `dist` has no native code, so a multi-arch image can build its first stage once with
   `--platform=$BUILDPLATFORM`.
-- Add `protocolVersion` to the published `package.json`, with a test that it equals the constant: the banner reads it
-  from the npm registry. Add it before the build id and the pack.
 - A Compose file with `image:`, so that an update is `docker compose pull` and `up -d`. Today it has only `build:`.
   Update `docs/user/vps.md`.
 - The server reads the latest version and its `protocolVersion` from the npm registry. A setting turns this off; it is

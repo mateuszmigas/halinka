@@ -1,6 +1,7 @@
 {
   "name": "halinka",
   "version": "0.0.1",
+  "protocolVersion": 20,
   "private": true,
   "description": "Self-hostable agent orchestration for the software development lifecycle",
   "license": "AGPL-3.0-only",

@@ -249,6 +249,8 @@ its folders and containers.
   the build. `halinka` has no npm dependencies. The build writes
   `dist/THIRD_PARTY_LICENSES.txt` from the license files of the bundled packages, or from `apps/cli/third-party-licenses/` for a
   package that ships none, and fails when a package has neither.
+- `apps/cli/package.json` states `protocolVersion`, so the update banner can read it from the npm registry; a test
+  checks that it equals the constant of `@halinka/protocol`.
 - The build writes `dist/build.json` with the build id ([runners.md](runners.md#decisions)); `halinka --version` prints
   the version and the start of that id.
 - Migrations, the portal and the `.mjs` scripts are copied to `dist`; the code reads them with
