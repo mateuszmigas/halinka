@@ -7,10 +7,9 @@ RUN npm install --global pnpm@12.5.1
 COPY . .
 RUN pnpm install --frozen-lockfile --filter "halinka..."
 RUN pnpm turbo build --filter=halinka
-# The npm packages of the lockfile; an npm install of the tarball takes the newest of each range.
-RUN pnpm --filter halinka deploy --prod /app
-# The package that runners install from this server: the same dist, so the same build id.
-RUN pnpm --filter halinka pack --pack-destination /pack && mv /pack/halinka-*.tgz /app/halinka.tgz
+# The package that runners install from this server; the image runs the same files.
+RUN pnpm --filter halinka pack --pack-destination /pack && mkdir /app && mv /pack/halinka-*.tgz /app/halinka.tgz
+RUN tar -xzf /app/halinka.tgz -C /app --strip-components=1
 
 FROM node:24.20.0-bookworm-slim
 # FileLocks reads the start time of a process with `ps`. The server is pid 1 after each restart, so

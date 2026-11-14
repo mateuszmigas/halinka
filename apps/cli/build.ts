@@ -1,10 +1,11 @@
 import { chmod, cp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 
-import { build } from "esbuild";
+import { build, type Metafile } from "esbuild";
 
 import { buildIdOf } from "./buildId";
-import { bundleOptions } from "./bundleOptions";
+import { copyExternalPackage, licensesOfBundle } from "./bundledPackages";
+import { bundleOptions, externalPackages } from "./bundleOptions";
 
 const distFolder = join(import.meta.dirname, "dist");
 
@@ -12,7 +13,6 @@ const repoFolder = join(import.meta.dirname, "../..");
 
 const fromRepo = (path: string) => join(repoFolder, path);
 
-// A runner installs the npm packages with npm, by the ranges of package.json, not by the lockfile.
 const listBuildFiles = async () => {
   const entries = await readdir(distFolder, { recursive: true, withFileTypes: true });
   const distFiles = entries
@@ -29,6 +29,22 @@ const writeBuildId = async () => {
   await writeFile(join(distFolder, "build.json"), JSON.stringify({ id: buildIdOf(files) }));
 };
 
+// MIT, BSD and Apache-2.0 need their notices in each copy of the code.
+const writeThirdPartyLicenses = async (metafile: Metafile) => {
+  const licenses = await licensesOfBundle(Object.keys(metafile.inputs), import.meta.dirname);
+  await writeFile(
+    join(distFolder, "THIRD_PARTY_LICENSES.txt"),
+    `${licenses.map(({ text }) => text).join("\n\n---\n\n")}\n`,
+  );
+};
+
+// Node finds them next to the chunks: a runner needs no npm registry.
+const copyToDist = (name: string) =>
+  copyExternalPackage(
+    join(import.meta.dirname, "node_modules", name),
+    join(distFolder, "node_modules", name),
+  );
+
 const runtimeFiles = [
   ["packages/server/src/db/migrations", "migrations"],
   ["packages/sandbox/src/egressProxy.mjs", "egressProxy.mjs"],
@@ -37,9 +53,13 @@ const runtimeFiles = [
 ] as const;
 
 await rm(distFolder, { recursive: true, force: true });
-await build(bundleOptions);
-await Promise.all(
-  runtimeFiles.map(([from, to]) => cp(fromRepo(from), join(distFolder, to), { recursive: true })),
-);
+const { metafile } = await build(bundleOptions);
+await Promise.all([
+  writeThirdPartyLicenses(metafile),
+  ...externalPackages.map(copyToDist),
+  ...runtimeFiles.map(([from, to]) =>
+    cp(fromRepo(from), join(distFolder, to), { recursive: true }),
+  ),
+]);
 await chmod(join(distFolder, "main.js"), 0o755);
 await writeBuildId();

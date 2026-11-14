@@ -243,17 +243,20 @@ its folders and containers.
 ## Package build
 
 - `apps/cli` is the package `halinka`; the root is `halinka-workspace`, because pnpm cannot have two projects with one
-  name. `pnpm --filter halinka build` runs esbuild: our packages go in the bundle, one chunk per command; each npm
-  package stays a dependency of `halinka`, so a new npm dependency of a workspace package also goes in
-  `apps/cli/package.json` (a test checks it).
+  name. `pnpm --filter halinka build` runs esbuild: our packages and the npm packages go in the bundle, one chunk per
+  command. PGlite and the devcontainer CLI find their files by path, so the build copies them to `dist/node_modules`,
+  where Node finds them next to the chunks; a package with dependencies fails
+  the build. `halinka` has no npm dependencies. The build writes
+  `dist/THIRD_PARTY_LICENSES.txt` from the license files of the bundled packages, or from `apps/cli/third-party-licenses/` for a
+  package that ships none, and fails when a package has neither.
 - The build writes `dist/build.json` with the build id ([runners.md](runners.md#decisions)); `halinka --version` prints
   the version and the start of that id.
 - Migrations, the portal and the `.mjs` scripts are copied to `dist`; the code reads them with
   `new URL("./x", import.meta.url)`. The egress proxy mounts a copy of its script from `$HALINKA_HOME`, named with a
   hash of its content, because Docker Desktop cannot mount a global npm folder.
 - `apps/cli` stays `private` until the owner publishes it. `pnpm test:pack` installs the tarball outside the checkout
-  and runs `init`, `start`, the portal and a workflow. The image (`infrastructure/Dockerfile`) takes `dist` and the npm
-  packages of the lockfile from `pnpm deploy --prod`, on `node:24.20.0-bookworm-slim`, runs as `node`, and listens on
+  as a runner does (offline, with an empty npm cache), loads each chunk, and runs `init`, `start`, the portal and a
+  workflow. The image (`infrastructure/Dockerfile`) unpacks the packed tarball of the build, on `node:24.20.0-bookworm-slim`, runs as `node`, and listens on
   all addresses, so it needs a login. The Compose file
   fixes its subnet, so `HALINKA_TRUSTED_PROXY` stays right.
 
@@ -297,13 +300,19 @@ its folders and containers.
   - the members of one GitHub organization: needs `read:org` and the approval of the organization owner; can come later
     as a second way onto the list.
   - the first person who logs in as Admin: a stranger can take Admin before the first login.
-- One esbuild bundle of our code with npm packages as dependencies ([above](#package-build)). Rejected:
+- One esbuild bundle of our code and the npm packages, with PGlite and the devcontainer CLI copied to
+  `dist/node_modules` ([above](#package-build)): a runner, the image and a registry install run the same bytes, which
+  the build id covers, and an install needs no npm registry. The tarball is about 12 MB, most of it PGlite. Rejected:
+  - the two packages as exact npm dependencies: npm takes them from the registry of the runner, with no integrity
+    from the lockfile.
+  - `bundleDependencies`: pnpm refuses it with `nodeLinker: isolated`.
+  - npm packages as dependencies with an `npm-shrinkwrap.json`: npm obeys the shrinkwrap of a dependency only from the
+    registry, so a runner that installs the tarball of the server gets the newest version of each range. The runner
+    then writes its own lockfile, and a stale shrinkwrap installs with no error.
   - `tsx` at run time: each package ships its source, and each `halinka ssh` transforms TypeScript.
   - one npm package per workspace package: ten versions for one program.
   - `tsdown`: a second layer on rolldown, before 1.0.
-- The image runs `pnpm deploy --prod`, not an npm install of the tarball: the install takes the newest version of each
-  range, so the server with the master key in its environment runs packages that no lockfile pinned and no test saw.
-  Rejected: an `npm-shrinkwrap.json` in the package (no step turns the pnpm lockfile into it yet).
+- The image unpacks the tarball that it serves to runners, so it runs the same files.
 - The server id in the database ([above](#server-id)). Rejected: a file in the home of the server (it survives a
   database reset, so old `run-1` and new `run-1` still meet); a marker file next to each workspace and a container label
   (each path that reuses a workspace must check them).
@@ -314,7 +323,14 @@ its folders and containers.
   update logic; its banner says to restart with `npx halinka@latest start`. Rejected: an Install button through a
   helper container with the Docker socket (root on the host); GitHub releases as the source (npm also gives
   `protocolVersion`).
-- The package is to ship `npm-shrinkwrap.json` from the pnpm lockfile, so that a tarball install gets the dependency
-  versions of the image ([releases](../tasks/releases.md)); until a step makes it, a runner installs the newest version
-  of each range ([runners.md](runners.md#decisions)). Rejected: bundled dependencies (a larger tarball); the newest version of each range (one bad
-  upstream release breaks each runner update).
+- A push of a tag `vX.Y.Z` runs one GitHub Actions workflow: it checks that the tag equals the version of
+  `apps/cli/package.json`, builds once, and publishes `halinka@X.Y.Z` to npm and `ghcr.io/mateuszmigas/halinka:X.Y.Z`
+  and `:latest`. Rejected: a manual run with a version input (git does not show which commit was published); a tag for
+  the image and a manual `npm publish` (the two can differ).
+- The update check is a server setting in the database, which admins change in the portal; `halinka start` reads the
+  same setting. Server settings that an admin changes at run time live there too: a `server_settings` table with one
+  row and a typed column per setting, which the server loads at start and keeps in one class. Rejected: an environment
+  variable (a change needs a restart and access to the host); a key and a JSON value (defaults and checks in code, for
+  a few settings).
+- `HALINKA_LEASE_SECONDS` and `HALINKA_SWEEP_SECONDS` stay environment variables for tests. Rejected: admin settings
+  (no admin needs them, and a lease near the 5 s sync makes each run expire and go back to the queue).

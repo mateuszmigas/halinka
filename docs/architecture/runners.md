@@ -361,11 +361,10 @@ The sandbox of each run (container and checkout) is stored on the server, and th
   (it does not load the runner code); an `OnFailure=` unit that links the previous version (it needs its own health
   and loop rules, and after a protocol change the old version is refused).
 - A build has a version and a build id: the sha256 of the files of `dist` and `apps/cli/package.json`, written to
-  `dist/build.json` by the build. A runner installs the npm packages by the ranges of `package.json`, not by the
-  lockfile, so the lockfile does not decide its code; a change of the website or a test tool keeps the id. A rebuild of the same code gives the same id. Code run from
+  `dist/build.json` by the build. `dist` holds all npm code, so the lockfile adds nothing; a change of the website or a test tool keeps the id. A rebuild of the same code gives the same id. Code run from
   source has the id `source`. Rejected: the sha512 of the packed tarball as the id (the tarball holds the build, so it
-  cannot hold its own hash); the version only (each build from a checkout is `0.0.1`); only the files of `dist` (a new dependency range gives other code
-  with the same id); `pnpm-lock.yaml` in the hash (a change of the website or a test tool marks each runner "out of
+  cannot hold its own hash); the version only (each build from a checkout is `0.0.1`); only the files of `dist` (`package.json` sets `type`, `bin` and
+  `engines`); `pnpm-lock.yaml` in the hash (a change of the website or a test tool marks each runner "out of
   date", and the runner does not install by it).
 - A runner reports its build in the capabilities of each `sync`. Rejected: a field of the hello (a change of the signed
   hello, and the hello must stay readable by each version); a field of the sync request (each test that calls `sync`
@@ -385,10 +384,10 @@ The sandbox of each run (container and checkout) is stored on the server, and th
   needs its own body reader); a probe through the hello (it promotes a pending key, closes other connections and
   registers a session); "refused" only from the hello (the version check runs before the signature, so it proves no
   key).
-- `halinka runner install` runs `npm install` of the package of the server with no lock of its dependencies, until
-  the shrinkwrap of [releases](../tasks/releases.md): npm takes the newest version of each range, so a runner can run
-  other dependency code with the build id of the server. Rejected: a tarball with `node_modules` from the image (it
-  ties the OS and CPU of each runner to the image); the shrinkwrap now (how to make it from the pnpm lockfile is open).
+- `halinka runner install` runs `npm install` of the package of the server: `dist` holds all npm code
+  ([overview.md](overview.md#decisions)), so the install fetches nothing. No `--offline`: a rollback to a build from
+  before this rule still needs the registry. Rejected: a tarball with
+  `node_modules` from the image (it ties the OS and CPU of each runner to the image).
 - The unit of a runner gets only `PATH` (without the folders of one shell session), `HALINKA_HOME` and the Docker
   variables of the install shell. Agent keys stay with the server or the subscription login of the machine. Rejected:
   a copy of the agent key variables into an `EnvironmentFile` (a second place that holds secrets).

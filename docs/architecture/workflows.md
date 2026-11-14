@@ -365,3 +365,8 @@ another kind. The run waits in `queued` with a wait reason.
   `config.yml` and all workflows (a new write path for several files and for `config.yml`).
 - The parse gives the reason of each key that an older schema had, in each later read. Rejected: reasons only in the
   output of the migration (after the write, each read gives "Unknown key" again).
+- A snapshot stores the `schema_version` that made its `resolved`. The claim fails a run with an older version, and a
+  reopen refuses it, with "Migrate the workflow and start a new run". A `schemaVersion` change also changes
+  `protocolVersion`. Rejected: fail all open runs at each update (runs that wait on a gate are lost with no schema
+  change); parse the snapshot files again (the strict parse refuses old files, and old schemas kept to read them are a
+  migration at each read); convert old snapshots with a database migration (`resolved` then differs from `files`).

@@ -7,8 +7,10 @@ with three builds: Update with one restart, auto-update after a server rollback,
 ## To do
 
 - e2e tests of the start path of `halinka runner`: `isUpdateRequested`, `update_needed`, the exit codes 75, 78 and 1.
-- The tarball install must get the dependency versions of the image: ship `npm-shrinkwrap.json`
-  ([releases](releases.md)).
+- The build id hashes all of `apps/cli/package.json` (`apps/cli/build.ts`), so a range change of a test tool
+  (`vitest`, `tsx`) gives a new id for the same code, and each runner shows "out of date". This conflicts with
+  [runners.md](../architecture/runners.md#decisions) ("a change of a test tool keeps the id"). Hash only the fields
+  that an install or a run reads: `version`, `type`, `bin`, `engines`.
 
 ## Checks
 

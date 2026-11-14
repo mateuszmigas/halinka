@@ -1,4 +1,5 @@
 import { execFileSync, spawn } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -47,9 +48,20 @@ test.describe("the packed package", () => {
     run("pnpm", ["turbo", "build", "--filter=halinka"], repoRoot);
     run("pnpm", ["--filter", "halinka", "pack", "--pack-destination", root], repoRoot);
     const [tarball] = (await readdir(root)).filter((name) => name.endsWith(".tgz"));
+    // As a runner installs it: no npm registry and an empty cache.
     run(
       "npm",
-      ["install", "--ignore-scripts", "--no-audit", "--no-fund", join(root, tarball!)],
+      [
+        "install",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund",
+        "--omit=dev",
+        "--offline",
+        "--cache",
+        join(root, "npm-cache"),
+        join(root, tarball!),
+      ],
       installed,
     );
   });
@@ -64,6 +76,48 @@ test.describe("the packed package", () => {
 
     await cli.waitForMatch(/^\S+ \(build [0-9a-f]{12}\)$/m);
     await cli.expectExit(0);
+  });
+
+  test("loads each chunk of the bundle", async () => {
+    const dist = join(installed, "node_modules/halinka/dist");
+    const chunks = (await readdir(dist)).filter(
+      (name) => name.endsWith(".js") && name !== "main.js",
+    );
+
+    const script = `const loaded = await Promise.all(${JSON.stringify(chunks.map((name) => join(dist, name)))}.map((path) => import(path)));
+process.stdout.write(String(loaded.length));`;
+
+    const output = execFileSync(process.execPath, ["--input-type=module", "--eval", script], {
+      cwd: root,
+      env: cleanEnv(),
+      encoding: "utf8",
+    });
+    expect(Number(output)).toBe(chunks.length);
+  });
+
+  test("runs the devcontainer CLI that the package carries", () => {
+    const cli = join(installed, "node_modules/halinka/dist/node_modules/@devcontainers/cli");
+    const { version } = JSON.parse(readFileSync(join(cli, "package.json"), "utf8")) as {
+      version: string;
+    };
+
+    const output = execFileSync(process.execPath, [join(cli, "devcontainer.js"), "--version"], {
+      cwd: root,
+      env: cleanEnv(),
+      encoding: "utf8",
+    });
+
+    expect(output.trim()).toBe(version);
+  });
+
+  test("carries the license of Halinka and of each bundled package", () => {
+    const dist = join(installed, "node_modules/halinka/dist");
+
+    const own = readFileSync(join(installed, "node_modules/halinka/LICENSE"), "utf8");
+    const bundled = readFileSync(join(dist, "THIRD_PARTY_LICENSES.txt"), "utf8");
+
+    expect(own).toContain("GNU AFFERO GENERAL PUBLIC LICENSE");
+    expect(bundled).toMatch(/^ws@\S+ \(MIT\)$/m);
   });
 
   test("writes the repo files with init", async () => {

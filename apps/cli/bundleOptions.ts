@@ -1,14 +1,7 @@
-import type { BuildOptions, Plugin } from "esbuild";
+import type { BuildOptions } from "esbuild";
 
-// An npm package stays external: PGlite and the devcontainer CLI find their files by path.
-const npmPackagesStayExternal: Plugin = {
-  name: "npm-packages-stay-external",
-  setup: (pluginBuild) => {
-    pluginBuild.onResolve({ filter: /^[^./]/ }, ({ path, kind }) =>
-      kind === "entry-point" || path.startsWith("@halinka/") ? undefined : { path, external: true },
-    );
-  },
-};
+// PGlite and the devcontainer CLI find their files by path.
+export const externalPackages = ["@devcontainers/cli", "@electric-sql/pglite"];
 
 // Flat in dist: the code finds its files next to itself with `import.meta.url`.
 export const bundleOptions = {
@@ -21,5 +14,15 @@ export const bundleOptions = {
   platform: "node",
   target: "node24",
   metafile: true,
-  plugins: [npmPackagesStayExternal],
+  // Native addons of bundled packages, which load them in a `try`.
+  external: [...externalPackages, "*.node"],
+  // Bundled CommonJS packages use `require`, `__dirname` and `__filename`.
+  banner: {
+    js: [
+      'import { createRequire as createRequireOfBundle } from "node:module";',
+      "const require = createRequireOfBundle(import.meta.url);",
+      "const __dirname = import.meta.dirname;",
+      "const __filename = import.meta.filename;",
+    ].join(" "),
+  },
 } satisfies BuildOptions;
