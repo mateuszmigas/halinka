@@ -138,6 +138,9 @@ export const router = api.router({
       context.services.serverSettings.update(input),
     ),
   },
+  serverUpdate: {
+    get: admin.serverUpdate.get.handler(({ context }) => context.services.serverUpdate.get()),
+  },
   repos: {
     list: member.repos.list.handler(({ context }) => context.services.repo.list()),
     secrets: member.repos.secrets.handler(({ input, context }) =>

@@ -13,7 +13,7 @@ type UpdateCheckSwitchProps = { isOn: boolean };
 
 const UpdateCheckSwitch = (props: UpdateCheckSwitchProps) => {
   const { isOn } = props;
-  const refresh = useInvalidateQueries(api.serverSettings.get.key());
+  const refresh = useInvalidateQueries(api.serverSettings.get.key(), api.serverUpdate.get.key());
   const update = useMutation(api.serverSettings.update.mutationOptions({ onSuccess: refresh }));
 
   return (

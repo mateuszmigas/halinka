@@ -42,6 +42,7 @@ import { MobileTabBar } from "./mobileTabBar";
 import { NavItem } from "./navItem";
 import { NewRunPopover } from "./runs/newRunPopover";
 import { ScrollContainerContext } from "./scrollContainer";
+import { UpdateBanner } from "./serverSettings/updateBanner";
 import { UserMenu } from "./userMenu";
 
 type NavGroupProps = { title?: string; children: ReactNode };
@@ -146,6 +147,7 @@ export const Layout = () => {
             <SidebarTrigger className="-ml-1 max-md:hidden" />
             <div ref={setBreadcrumbSlot} className="min-w-0" />
           </header>
+          <UpdateBanner />
           <div ref={setScrollContainer} className="min-h-0 flex-1 overflow-auto p-4 md:p-8">
             <BreadcrumbSlotContext value={breadcrumbSlot}>
               <ScrollContainerContext value={scrollContainer}>

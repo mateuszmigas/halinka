@@ -16,7 +16,13 @@ import { type DbLocation, openDb } from "./db/client";
 import { createRepositories, inTransaction } from "./db/repositories";
 import { workflowRuns, workflowSchedules } from "./db/schema";
 import { Server } from "./server";
-import { devcontainerConfig, devcontainerRunner, testAuthConfig, worktreeRunner } from "./testing";
+import {
+  devcontainerConfig,
+  devcontainerRunner,
+  stubNpmRegistry,
+  testAuthConfig,
+  worktreeRunner,
+} from "./testing";
 
 const config = "schema_version: 1\nserver: local\n";
 
@@ -383,6 +389,25 @@ describe("Server", () => {
     expect(await createApiClient(second.server.url).serverSettings.get()).toEqual({
       isUpdateCheckOn: false,
     });
+  });
+
+  it("reads the npm registry at start when the CLI gives the command", async () => {
+    const fetch = stubNpmRegistry();
+    const server = new Server({
+      port: 0,
+      build: testBuild,
+      dbLocation: { kind: "pglite" },
+      masterKey: randomBytes(32),
+      update: { command: "server" },
+    });
+    onTestFinished(() => server.stop());
+
+    await server.start();
+
+    expect(fetch).toHaveBeenCalledWith(
+      "https://registry.npmjs.org/halinka/latest",
+      expect.anything(),
+    );
   });
 
   it("gives another server id to another database", async () => {

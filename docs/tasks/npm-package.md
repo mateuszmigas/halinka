@@ -11,8 +11,8 @@ Publish the package `halinka` to npm. This is the last step: publish only when t
   them as the CLI build writes `dist/THIRD_PARTY_LICENSES.txt`.
 - The manifest, the probe and the typed refusals are in; each version keeps them ([runners.md](../architecture/runners.md#decisions)).
 - An unpinned `npx halinka` takes the latest package, and a team server runs its own version, so `halinka check` can
-  differ from that server. Before the publish, let the server show its version, and make step 5 of `halinka setup` use
-  `npx halinka@<version>`.
+  differ from that server. Before the publish, make step 5 of `halinka setup` use `npx halinka@<version>`, with the
+  `version` of `GET /api/runner/manifest` (public, and each version keeps it).
 - After the publish, add this to the README: tell your coding agent "Run `npx halinka setup` and follow it." Not
   before: until we publish, `npx halinka` runs whatever package has that name.
 - Tell people who use `halinka ssh` to install the package globally.

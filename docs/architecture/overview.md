@@ -249,6 +249,20 @@ database, so no other process changes the row.
 Admins change the settings on the Server page of the portal (`serverSettings.update`). The zod input schema of the
 contract holds the range rules. The first setting is the update check (`isUpdateCheckOn`, on by default).
 
+## Update check
+
+- When the update check is on, `UpdateCheck` reads `https://registry.npmjs.org/halinka/latest` at start and each
+  24 h, with a 10 s timeout. It keeps the last answer in memory. After a failed request, it keeps the last answer and
+  logs one line.
+- A newer version has the form `X.Y.Z` and a higher number. Another form gives no update. `isProtocolChange`: the
+  `protocolVersion` of the answer differs from the one of the server. An answer without the field is no change.
+- The CLI gives the command that runs the server: `start` or `server`. Code run from source has no check.
+- A change of the setting stops a running request and forgets the answer. When the check is on again, it reads at
+  once.
+- `serverUpdate.get` (Admins) gives the result. The portal shows a banner above each page. The banner gives the
+  commands for the command of the server: back up, `docker compose pull` and `up -d`, or a start with
+  `npx halinka@latest start`.
+
 ## Package build
 
 - `apps/cli` is the package `halinka`; the root is `halinka-workspace`, because pnpm cannot have two projects with one
@@ -343,5 +357,18 @@ contract holds the range rules. The first setting is the update check (`isUpdate
   row and a typed column per setting, which the server loads at start and keeps in one class. Rejected: an environment
   variable (a change needs a restart and access to the host); a key and a JSON value (defaults and checks in code, for
   a few settings).
+- The update check keeps its answer in memory, with its own 24 h timer. Rejected: a table (a restart reads again
+  with one request); the sweep tick (it runs each 1 to 10 s).
+- A newer version is a numeric compare of `X.Y.Z`. Rejected: the `semver` package (the release workflow publishes
+  only `X.Y.Z`, and the check reads only the `latest` tag).
+- The CLI gives the command that runs the server to the server. Rejected: the command from the login or the host
+  (`halinka server` can run without a login).
+- Code run from source has no update check, so tests and `pnpm dev` send no request to npm. The e2e tests of the
+  banner replace the answer of `serverUpdate.get`. Rejected: a registry URL option and an environment variable (a second
+  path for tests only).
+- The portal reads `serverUpdate.get`, an admin procedure, at each page load and when the window gets the focus, with
+  no poll. Only Admins act on an update. The version is public anyway through `GET /api/runner/manifest`. Rejected: a
+  field of `session` (each page and each caller reads it); a poll (the focus read is enough, and a read sends no
+  request to npm).
 - `HALINKA_LEASE_SECONDS` and `HALINKA_SWEEP_SECONDS` stay environment variables for tests. Rejected: admin settings
   (no admin needs them, and a lease near the 5 s sync makes each run expire and go back to the queue).

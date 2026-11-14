@@ -11,6 +11,7 @@ import { RunnersPage } from "./pages/runnersPage";
 import { RunPage } from "./pages/runPage";
 import { RunsPage, startRunFrom, type StartRunOptions } from "./pages/runsPage";
 import { ServerSettingsPage } from "./pages/serverSettingsPage";
+import type { ServerUpdate } from "./pages/updateBanner";
 
 export class TestPortal {
   constructor(
@@ -50,6 +51,13 @@ export class TestPortal {
   async openCosts() {
     await this.page.goto(`${this.server.url}/costs`);
     return new CostsPage(this.page);
+  }
+
+  // Code run from source has no update check.
+  async answerServerUpdate(update: ServerUpdate) {
+    await this.page.route("**/api/server-update", (route) =>
+      route.fulfill({ json: { currentVersion: "0.0.1", update } }),
+    );
   }
 
   async openServerSettings() {

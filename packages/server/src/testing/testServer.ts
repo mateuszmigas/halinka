@@ -27,6 +27,7 @@ import type { RunnerPackage } from "../runnerPackage";
 import { SecretCipher } from "../secrets";
 import { ServerSettings } from "../serverSettings";
 import { createServices } from "../services";
+import { type ServerCommand, UpdateCheck } from "../updateCheck";
 import { hubot, logIn, octo, testAuthConfig } from "./testAuth";
 import { registerTestRunner, testKeyOf } from "./testDb";
 
@@ -200,6 +201,7 @@ export const createTestServer = async (
     isRemoteRunner?: boolean;
     hasAuth?: boolean;
     runnerPackage?: RunnerPackage;
+    command?: ServerCommand;
   } = {},
 ) => {
   const commands = new FakeRunnerCommands();
@@ -217,10 +219,14 @@ export const createTestServer = async (
     close: closed,
   };
   const localRunnerId = options.isRemoteRunner ? undefined : runnerId;
+  const serverSettings = await ServerSettings.load(createRepositories(db));
+  const updateCheck =
+    options.command && new UpdateCheck(testBuild.version, options.command, serverSettings);
   const services = createServices({
     db,
     build: testBuild,
-    serverSettings: await ServerSettings.load(createRepositories(db)),
+    serverSettings,
+    ...(updateCheck && { updateCheck }),
     publicUrl: testApiUrl,
     ...(options.runnerPackage && { runnerPackage: options.runnerPackage }),
     connectedRunners,
@@ -267,6 +273,7 @@ export const createTestServer = async (
     app,
     api,
     services,
+    updateCheck,
     setApiCookie: (cookie: string) => {
       apiCookie = cookie;
     },

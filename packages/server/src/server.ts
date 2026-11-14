@@ -36,6 +36,7 @@ import { SecretCipher } from "./secrets";
 import { ServerSettings } from "./serverSettings";
 import { createServices, type Services } from "./services";
 import { sweep } from "./sweep";
+import { type ServerCommand, UpdateCheck } from "./updateCheck";
 
 const localHostname = "127.0.0.1";
 
@@ -52,6 +53,7 @@ type ServerOptions = {
   leaseTimes?: LeaseTimes;
   auth?: AuthConfig;
   host?: string;
+  update?: { command: ServerCommand };
 };
 
 type Running = {
@@ -124,6 +126,9 @@ export class Server implements RunnerAcceptor {
     await repositories.workflowRun.extendLeases(this.leaseTimes.leaseSeconds);
     const serverId = await repositories.serverIdentity.findOrCreate();
     const serverSettings = await ServerSettings.load(repositories);
+    const { update } = this.options;
+    const updateCheck =
+      update && new UpdateCheck(this.options.build.version, update.command, serverSettings);
     const bus = new RunBus();
     const connectedRunners = {
       commandsOf: (id: number) => this.sessionsOf(id).map(({ commands }) => commands),
@@ -143,6 +148,7 @@ export class Server implements RunnerAcceptor {
       localRunnerId: () => this.localRunnerId,
       cipher: this.cipher,
       serverSettings,
+      ...(updateCheck && { updateCheck }),
     });
     const betterAuth = auth && createAuth(db, services.member, auth);
     const app = createApp(services, {
@@ -205,6 +211,7 @@ export class Server implements RunnerAcceptor {
       fireSchedules();
     };
     tick();
+    updateCheck?.start();
     const sweeper = setInterval(tick, this.leaseTimes.sweepMs);
     this.running = {
       db,
@@ -217,7 +224,7 @@ export class Server implements RunnerAcceptor {
       port,
       close: async () => {
         clearInterval(sweeper);
-        await Promise.all([sweeping, firing]);
+        await Promise.all([sweeping, firing, updateCheck?.stop()]);
         relays.close();
         runnerSockets.close();
         // `close` waits for open connections, and a run stream stays open until its client leaves.

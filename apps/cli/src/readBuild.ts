@@ -6,6 +6,8 @@ import { readTextFile } from "@halinka/utils/fs";
 
 const sourceBuildId = "source";
 
+export const isSourceBuild = (build: Build) => build.id === sourceBuildId;
+
 // Undefined for code run from source, which has no build.json.
 export const readBuildId = async (buildFile: string) => {
   const text = await readTextFile(buildFile);

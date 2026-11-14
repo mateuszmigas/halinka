@@ -39,6 +39,7 @@ packages/server/src/
   sweep.ts             the periodic sweeps: expired leases, lost agent tests, waiting runs, sandbox TTL, gone repos, old rows
   secrets.ts           SecretCipher (seal and open) and the place of each secret kind
   serverSettings.ts    ServerSettings: the settings row that the server loads at start
+  updateCheck.ts       UpdateCheck: the latest version from the npm registry
   tokens.ts            newToken and newUserCode (hashOf is in @halinka/utils/hash)
   rateLimiter.ts       RateLimiter: requests per minute per client address, for HTTP routes and WebSocket upgrades
   withoutNulls.ts      withoutNulls: a row with each null field as undefined, for the output of a service

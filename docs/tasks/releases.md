@@ -12,14 +12,12 @@ in [overview.md](../architecture/overview.md#decisions).
   `/app/halinka.tgz` of the image build, not a second `pnpm pack` on the workflow host (another build can give
   another build id). `dist` has no native code, so a multi-arch image can build its first stage once with
   `--platform=$BUILDPLATFORM`.
+  - Publish to npm after the image push: the update banner reads the npm `latest` tag, and its `docker compose pull`
+    must find the image.
+  - Refuse a tag that is not `vX.Y.Z`: the update check compares only `X.Y.Z`.
+  - Do the Compose item below before the first publish: the banner tells admins to run `docker compose pull`.
 - A Compose file with `image:`, so that an update is `docker compose pull` and `up -d`. Today it has only `build:`.
   Update `docs/user/vps.md`.
-- The server reads the latest version and its `protocolVersion` from the npm registry, when the update check is on
-  (`ServerSettings.values`, [overview.md](../architecture/overview.md#server-settings)). Admins see a banner with the
-  version and the commands: back up, `docker compose pull`, `up -d`. When the protocol changes, the banner says that
-  each runner stops its runs and updates.
-- `halinka start`: the same banner (it reads the `ServerSettings` of its server), with "Restart with
-  `npx halinka@latest start`". An unpinned `npx halinka` can use a cached old version.
 - A snapshot stores its `schema_version` ([workflows.md](../architecture/workflows.md#decisions)): a column on
   `workflow_snapshots` with a backfill of 1. The claim fails a run with an older version and reopen refuses it. A
   `schemaVersion` change also changes `protocolVersion`. A test: a stored `resolved` of each released version parses
@@ -31,6 +29,8 @@ in [overview.md](../architecture/overview.md#decisions).
 - From an installed build (the e2e suite runs the source): `halinka ssh <run>`, `halinka open` and `scp` against a
   runner (the bundled `ssh2`); `halinka start --runs-in docker` (the copied devcontainer CLI and its `scripts/`); the
   GitHub login of `halinka server`; `halinka runner` from `versions/current`; Postgres with TLS.
+- After the first two publishes: `https://registry.npmjs.org/halinka/latest` gives `protocolVersion`, and a server of
+  the older version shows the update banner. Until the first publish, each check logs a 404.
 
 ## Nice to have
 

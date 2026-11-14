@@ -399,6 +399,20 @@ const repoSecretInputSchema = idInputSchema.extend({ name: secretNameSchema });
 // `isUpdateCheckOn`: the server reads the latest version from the npm registry.
 const serverSettingsSchema = z.object({ isUpdateCheckOn: z.boolean() });
 
+const serverUpdateSchema = z.object({
+  currentVersion: z.string(),
+  // Absent when no newer version is known.
+  update: z
+    .object({
+      latestVersion: z.string(),
+      // The latest version has another `protocolVersion`.
+      isProtocolChange: z.boolean(),
+      // The CLI command that runs this server.
+      command: z.enum(["start", "server"]),
+    })
+    .optional(),
+});
+
 export const contract = {
   health: oc.route({ method: "GET", path: "/health" }).output(z.object({ ok: z.literal(true) })),
   session: oc.route({ method: "GET", path: "/session" }).output(
@@ -542,6 +556,9 @@ export const contract = {
       .errors(errors("BAD_REQUEST"))
       .input(serverSettingsSchema.partial())
       .output(serverSettingsSchema),
+  },
+  serverUpdate: {
+    get: oc.route({ method: "GET", path: "/server-update" }).output(serverUpdateSchema),
   },
   repos: {
     list: oc.route({ method: "GET", path: "/repos" }).output(z.array(repoSchema)),
