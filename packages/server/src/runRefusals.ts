@@ -1,7 +1,13 @@
 import { isEndedOrExpired, isRunResult } from "@halinka/protocol";
+import { schemaVersion } from "@halinka/workflow";
 
 import type { DbWorkflowRun } from "./db/schema";
 import { noRun, ServiceError } from "./services/serviceError";
+
+export const isOlderSchema = (run: { schemaVersion: number }) => run.schemaVersion < schemaVersion;
+
+export const olderSchemaReason = (workflowRunId: number) =>
+  `Run ${workflowRunId} is from an older Halinka. Migrate the workflow and start a new run.`;
 
 export const testRunReason = (workflowRunId: number) =>
   `Run ${workflowRunId} is a test run: it writes nothing to GitHub`;

@@ -36,7 +36,7 @@ import { SecretCipher } from "./secrets";
 import { ServerSettings } from "./serverSettings";
 import { createServices, type Services } from "./services";
 import { sweep } from "./sweep";
-import { type ServerCommand, UpdateCheck } from "./updateCheck";
+import { type ServerUpdate, UpdateCheck } from "./updateCheck";
 
 const localHostname = "127.0.0.1";
 
@@ -53,7 +53,7 @@ type ServerOptions = {
   leaseTimes?: LeaseTimes;
   auth?: AuthConfig;
   host?: string;
-  update?: { command: ServerCommand };
+  update?: ServerUpdate;
 };
 
 type Running = {
@@ -128,7 +128,7 @@ export class Server implements RunnerAcceptor {
     const serverSettings = await ServerSettings.load(repositories);
     const { update } = this.options;
     const updateCheck =
-      update && new UpdateCheck(this.options.build.version, update.command, serverSettings);
+      update && new UpdateCheck(this.options.build.version, update, serverSettings);
     const bus = new RunBus();
     const connectedRunners = {
       commandsOf: (id: number) => this.sessionsOf(id).map(({ commands }) => commands),

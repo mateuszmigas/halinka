@@ -17,6 +17,8 @@ export const workflowSnapshots = pgTable(
     contentHash: text().notNull(),
     files: jsonb().$type<Record<string, string>>().notNull(),
     resolved: jsonb().$type<Workflow>().notNull(),
+    // the `schemaVersion` of the parse that made `resolved`
+    schemaVersion: integer().notNull(),
     // path from `.halinka/config.yml`; `files` has its text when the base commit has it
     devcontainer: text(),
     setupNetwork: jsonb().$type<NetworkHosts>().notNull().default([]),
@@ -29,10 +31,11 @@ export const workflowSnapshots = pgTable(
     createdAt: createdAt(),
   },
   (table) => [
-    unique("workflow_snapshots_repo_id_path_content_hash_unique").on(
+    unique("workflow_snapshots_content_version_unique").on(
       table.repoId,
       table.path,
       table.contentHash,
+      table.schemaVersion,
     ),
   ],
 );

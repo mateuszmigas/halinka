@@ -8,7 +8,6 @@ import { expect, test } from "@playwright/test";
 const run = promisify(execFile);
 
 const repoRoot = join(import.meta.dirname, "../../..");
-const composeFile = join(repoRoot, "infrastructure/docker-compose.yml");
 
 const login = {
   HALINKA_PUBLIC_URL: "http://localhost:7070",
@@ -75,8 +74,8 @@ test.describe("the image", () => {
 test.describe("the compose file", () => {
   const project = `halinka-test-${randomUUID()}`;
   const compose = (...args: string[]) =>
-    run("docker", ["compose", "--project-name", project, "--file", composeFile, ...args], {
-      cwd: repoRoot,
+    run("docker", ["compose", "--project-name", project, ...args], {
+      cwd: join(repoRoot, "infrastructure"),
       maxBuffer: 2 ** 28,
       env: {
         ...process.env,
@@ -88,11 +87,12 @@ test.describe("the compose file", () => {
     });
 
   test.afterAll(async () => {
-    await compose("down", "--volumes", "--rmi", "local").catch(() => {});
+    await compose("down", "--volumes").catch(() => {});
+    await run("docker", ["rmi", "halinka:source"]).catch(() => {});
   });
 
   test("serves the portal from a server on Postgres", async () => {
-    await compose("up", "--detach", "--build", "--wait");
+    await compose("up", "--detach", "--wait");
 
     const { stdout } = await compose("port", "server", "7070");
     const address = stdout.trim();
@@ -115,5 +115,17 @@ test.describe("the compose file", () => {
     for (let attempt = 0; attempt < 5; attempt++) statuses.push((await signIn()).status);
 
     expect(statuses).toEqual([200, 200, 200, 200, 200]);
+  });
+
+  test("keeps the build from source on a pull", async () => {
+    const readImageId = async () =>
+      (
+        await run("docker", ["image", "inspect", "--format", "{{.Id}}", "halinka:source"])
+      ).stdout.trim();
+    const builtId = await readImageId();
+
+    await compose("pull", "server");
+
+    expect(await readImageId()).toBe(builtId);
   });
 });

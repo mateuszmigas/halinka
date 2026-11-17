@@ -36,6 +36,22 @@ export const UpdateBanner = () => {
               <Command>docker compose up -d</Command>.
             </p>
           )}
+          {update.command === "server" && update.isComposeChange && (
+            <p>
+              This version changes the Compose files. Download <Command>docker-compose.yml</Command>{" "}
+              and <Command>env.template</Command> of the{" "}
+              <a
+                href={`https://github.com/mateuszmigas/halinka/releases/tag/v${update.latestVersion}`}
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
+                release
+              </a>{" "}
+              into the folder of the server, and add the new values of{" "}
+              <Command>env.template</Command> to <Command>.env</Command>.
+            </p>
+          )}
           {update.isProtocolChange && (
             <p>After the update, each runner stops its runs and installs the new version.</p>
           )}

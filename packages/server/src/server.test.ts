@@ -21,6 +21,7 @@ import {
   devcontainerRunner,
   stubNpmRegistry,
   testAuthConfig,
+  testComposeVersion,
   worktreeRunner,
 } from "./testing";
 
@@ -398,7 +399,7 @@ describe("Server", () => {
       build: testBuild,
       dbLocation: { kind: "pglite" },
       masterKey: randomBytes(32),
-      update: { command: "server" },
+      update: { command: "server", composeVersion: testComposeVersion },
     });
     onTestFinished(() => server.stop());
 

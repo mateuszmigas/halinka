@@ -34,7 +34,13 @@ import { type DbWorkflowRun, skipsSetup } from "../db/schema";
 import { deleteRunIfGone, deleteRunOfRevokedRunner } from "../deletion";
 import { inRunTransaction, type RunBus } from "../runBus";
 import { closeEndedRun } from "../runEnd";
-import { finishedRunRefusal, pullRequestRefusal, pushRefusal } from "../runRefusals";
+import {
+  finishedRunRefusal,
+  isOlderSchema,
+  olderSchemaReason,
+  pullRequestRefusal,
+  pushRefusal,
+} from "../runRefusals";
 import { RunStream } from "../runStream";
 import { disabledAgentReason, findWaitReason, settingsRefusalReason } from "../waitReason";
 import { withoutNulls } from "../withoutNulls";
@@ -173,8 +179,12 @@ const sandboxOf = (run: DbWorkflowRun, { isOnLocalRunner }: SandboxOfOptions) =>
 };
 
 // A reopen takes a finished run, or a leased run without a cancel request.
-const reopenRefusal = (run: DbWorkflowRun) =>
-  isRunResult(run.status) ? undefined : messageRefusal(run);
+const reopenRefusal = (run: RunWithRepo) => {
+  if (isOlderSchema(run)) {
+    return new ServiceError("CONFLICT", olderSchemaReason(run.id));
+  }
+  return isRunResult(run.status) ? undefined : messageRefusal(run);
+};
 
 const canReopen = ({ status, attempts }: { status: StepRunStatus; attempts: number }) =>
   status !== "running" && status !== "superseded" && attempts > 0;
@@ -237,7 +247,7 @@ type ReopenTarget = NonNullable<Awaited<ReturnType<Repositories["stepRun"]["lock
 // Call it in a transaction with the run locked.
 const reopenStep = async (
   { workflowRun, stepRun, stepAttempt, inboxItem }: Repositories,
-  run: DbWorkflowRun,
+  run: RunWithRepo,
   target: ReopenTarget,
 ) => {
   const { id, status, leaseToken, repoId, branch } = run;

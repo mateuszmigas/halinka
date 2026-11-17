@@ -1,5 +1,6 @@
-# The server with Postgres on a VPS. Copy .env.template to .env, fill it in, then:
-#   docker compose -f infrastructure/docker-compose.yml up -d --build
+# The server with Postgres on a VPS. Put the settings in .env, then:
+#   docker compose up -d
+# In a checkout, docker-compose.override.yml builds the server from source.
 # The port is on localhost only. Put a reverse proxy with TLS in front of it.
 name: halinka
 
@@ -20,9 +21,7 @@ services:
       retries: 5
 
   server:
-    build:
-      context: ..
-      dockerfile: infrastructure/Dockerfile
+    image: ghcr.io/mateuszmigas/halinka:latest
     restart: unless-stopped
     depends_on:
       db:

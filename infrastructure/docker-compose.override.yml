@@ -1,0 +1,9 @@
+# Compose loads this file next to docker-compose.yml, so a checkout builds the server from source.
+services:
+  server:
+    # `docker compose pull` then does not replace this build with a release.
+    image: halinka:source
+    pull_policy: build
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile

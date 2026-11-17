@@ -105,6 +105,7 @@ const withRepo = {
   ...getTableColumns(workflowRuns),
   ...runLabel,
   workflow: workflowSnapshots.resolved,
+  schemaVersion: workflowSnapshots.schemaVersion,
   setupSecrets: workflowSnapshots.setupSecrets,
   repoKind: repos.kind,
   repoPath: repos.path,
@@ -114,6 +115,7 @@ const withRepo = {
 export type RunWithRepo = DbWorkflowRun &
   RunLabel & {
     workflow: Workflow;
+    schemaVersion: number;
     setupSecrets: string[];
     repoKind: DbRepo["kind"];
     repoPath: string | null;
@@ -421,6 +423,7 @@ export class WorkflowRunRepository {
         setupNetwork: workflowSnapshots.setupNetwork,
         setupRun: workflowSnapshots.setupRun,
         workflow: workflowSnapshots.resolved,
+        schemaVersion: workflowSnapshots.schemaVersion,
         inputs: workflowRuns.inputs,
         workspaceOpened: workflowRuns.workspaceOpened,
       })

@@ -1728,6 +1728,13 @@ describe("GET /api/runs/{id}", () => {
     expect((await api.runs.get({ id: 1 })).reopenTargets).toEqual([implement]);
   });
 
+  it("gives no reopen targets for a run of an older schema version", async () => {
+    const { api } = await withFinishedStep();
+    await testDb().update(workflowSnapshots).set({ schemaVersion: 0 });
+
+    expect((await api.runs.get({ id: 1 })).reopenTargets).toEqual([]);
+  });
+
   it("gives no reopen targets for a run with a cancel request", async () => {
     const { api } = await withFinishedStep();
     await api.runs.cancel({ id: 1 });
@@ -2363,6 +2370,16 @@ describe("POST /api/runs/{id}/steps/{stepRunId}/messages", () => {
     expect(stepRun?.status).toBe("running");
     expect(stepRun).not.toHaveProperty("summary");
     expect(stepRun).not.toHaveProperty("finishedAt");
+  });
+
+  it("refuses a reopen of a run of an older schema version", async () => {
+    const { reopen } = await withFinishedStep();
+    await testDb().update(workflowSnapshots).set({ schemaVersion: 0 });
+
+    await expect(reopen()).rejects.toMatchObject({
+      code: "CONFLICT",
+      message: expect.stringContaining("Migrate the workflow and start a new run"),
+    });
   });
 
   it("queues a live run again at a reopen", async () => {
@@ -3093,6 +3110,15 @@ describe("POST /api/runs/{id}/pull-request", () => {
 });
 
 describe("POST /api/runs/{id}/steps/{stepRunId}/retry", () => {
+  it("refuses a retry of a run of an older schema version", async () => {
+    const { api, publish } = await finishPublish("failed");
+    await testDb().update(workflowSnapshots).set({ schemaVersion: 0 });
+
+    await expect(api.runs.retryStep({ id: 1, stepRunId: publish })).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+  });
+
   it("queues the run", async () => {
     const { api, publish } = await finishPublish("failed");
 

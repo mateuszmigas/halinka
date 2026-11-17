@@ -1,0 +1,153 @@
+{
+  "name": "Reference",
+  "inputs": {
+    "issue_number": {
+      "type": "number",
+      "required": true,
+      "description": "The issue to implement"
+    },
+    "title": {
+      "type": "string",
+      "default": ""
+    },
+    "dry_run": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "on": {
+    "issues": {
+      "types": ["opened", "reopened", "labeled"],
+      "labels": ["halinka"],
+      "inputs": {
+        "issue_number": "${{ event.issue.number }}",
+        "title": "${{ event.issue.title }}"
+      }
+    },
+    "issue_comment": {
+      "starts_with": "/halinka",
+      "inputs": {
+        "issue_number": "${{ event.issue.number }}",
+        "title": "${{ event.comment.body ?? '' }}"
+      }
+    },
+    "cron": {
+      "schedule": "0 6 * * 1-5",
+      "inputs": {
+        "issue_number": "1"
+      }
+    }
+  },
+  "branch": {
+    "name": "halinka/issue-${{ inputs.issue_number }}"
+  },
+  "runs-on": ["gpu"],
+  "max_cost_usd": 20,
+  "concurrency": {
+    "group": "issue-${{ inputs.issue_number }}"
+  },
+  "steps": [
+    {
+      "id": "prepare",
+      "type": "shell",
+      "if": "${{ inputs.dry_run == false }}",
+      "run": "pnpm install --frozen-lockfile",
+      "network": ["registry.npmjs.org"],
+      "timeout": "10m"
+    },
+    {
+      "id": "fix_loop",
+      "type": "loop",
+      "max_iterations": 3,
+      "until": "${{ steps.code_review.outcome == 'approve' }}",
+      "max_cost_usd": 15,
+      "timeout": "2h",
+      "steps": [
+        {
+          "id": "implement",
+          "type": "agent",
+          "agent": "claude-code",
+          "model": "claude-opus-5-5",
+          "prompt": "Implement issue #${{ inputs.issue_number }}: ${{ inputs.title }}\nReview findings: ${{ loop.previous.code_review.outputs.findings ?? 'none' }}\n",
+          "permissions": {
+            "write": true,
+            "shell": true,
+            "network": ["api.github.com"]
+          },
+          "tools": ["Read", "Edit", "Bash"],
+          "mcp_servers": [
+            {
+              "name": "docs",
+              "command": "docs-server",
+              "args": ["--stdio"]
+            }
+          ],
+          "require_changes": true,
+          "max_reminders": 2,
+          "max_attempts": 4,
+          "max_turns": 30,
+          "timeout": "45m",
+          "max_cost_usd": 5,
+          "on_exhausted": "ask_human",
+          "gates": [
+            {
+              "name": "tests",
+              "run": "pnpm test",
+              "network": false,
+              "on_fail": "retry"
+            }
+          ],
+          "outcomes": {
+            "done": "ok",
+            "blocked": "fail"
+          },
+          "outputs": {
+            "summary_lines": {
+              "type": "array",
+              "items": "string"
+            },
+            "stats": {
+              "files": "number",
+              "tested": "boolean"
+            }
+          }
+        },
+        {
+          "id": "code_review",
+          "type": "agent",
+          "agent": "claude-code",
+          "prompt": "Review the branch diff against its base. Report only blocking issues.",
+          "permissions": {
+            "write": false
+          },
+          "outcomes": ["approve", "changes_requested"],
+          "outputs": {
+            "findings": {
+              "type": "array",
+              "items": {
+                "file": "string",
+                "line": "number",
+                "message": "string"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "approve",
+      "type": "approval",
+      "message": "Review the diff of issue ${{ inputs.issue_number }}",
+      "reviewers": ["code_review"]
+    },
+    {
+      "id": "open_pr",
+      "type": "github",
+      "action": "open_pull_request",
+      "title": "${{ inputs.title }}",
+      "body": "${{ steps.implement.summary }}",
+      "closes": "${{ inputs.issue_number }}",
+      "timeout": "10m"
+    }
+  ]
+}

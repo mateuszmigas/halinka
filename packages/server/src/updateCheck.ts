@@ -6,6 +6,12 @@ import type { ServerSettings } from "./serverSettings";
 
 export type ServerCommand = "start" | "server";
 
+export type ServerUpdate = {
+  command: ServerCommand;
+  // The `composeVersion` of the package.json of this build.
+  composeVersion: number;
+};
+
 const latestUrl = "https://registry.npmjs.org/halinka/latest";
 
 const checkMs = 24 * 60 * 60 * 1000;
@@ -15,6 +21,7 @@ const timeoutMs = 10_000;
 const latestSchema = z.object({
   version: z.string(),
   protocolVersion: z.number().int().optional(),
+  composeVersion: z.number().int().optional(),
 });
 
 type Latest = z.infer<typeof latestSchema>;
@@ -45,7 +52,7 @@ export class UpdateCheck {
 
   constructor(
     private readonly currentVersion: string,
-    private readonly command: ServerCommand,
+    private readonly update: ServerUpdate,
     private readonly settings: ServerSettings,
   ) {}
 
@@ -54,10 +61,12 @@ export class UpdateCheck {
     if (!latest || !isNewerVersion(latest.version, this.currentVersion)) return undefined;
     return {
       latestVersion: latest.version,
-      // Older releases have no `protocolVersion`.
+      // Older releases have no `protocolVersion` and no `composeVersion`.
       isProtocolChange:
         latest.protocolVersion !== undefined && latest.protocolVersion !== protocolVersion,
-      command: this.command,
+      isComposeChange:
+        latest.composeVersion !== undefined && latest.composeVersion !== this.update.composeVersion,
+      command: this.update.command,
     };
   }
 

@@ -1,5 +1,5 @@
 import { hashOf } from "@halinka/utils/hash";
-import type { NetworkHosts, Workflow } from "@halinka/workflow";
+import { type NetworkHosts, schemaVersion, type Workflow } from "@halinka/workflow";
 import { and, eq } from "drizzle-orm";
 
 import type { Db } from "../client";
@@ -33,7 +33,7 @@ export class WorkflowSnapshotRepository {
     const contentHash = contentHashOf(snapshot.files);
     const [created] = await this.db
       .insert(workflowSnapshots)
-      .values({ ...snapshot, contentHash })
+      .values({ ...snapshot, contentHash, schemaVersion })
       .onConflictDoNothing()
       .returning();
     if (created) return created;
@@ -45,6 +45,7 @@ export class WorkflowSnapshotRepository {
           eq(workflowSnapshots.repoId, snapshot.repoId),
           eq(workflowSnapshots.path, snapshot.path),
           eq(workflowSnapshots.contentHash, contentHash),
+          eq(workflowSnapshots.schemaVersion, schemaVersion),
         ),
       );
     if (!existing) throw new Error(`The snapshot of ${snapshot.path} was not stored`);

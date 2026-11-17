@@ -407,6 +407,8 @@ const serverUpdateSchema = z.object({
       latestVersion: z.string(),
       // The latest version has another `protocolVersion`.
       isProtocolChange: z.boolean(),
+      // The latest version has another `docker-compose.yml` or `env.template`.
+      isComposeChange: z.boolean(),
       // The CLI command that runs this server.
       command: z.enum(["start", "server"]),
     })

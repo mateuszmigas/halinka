@@ -24,7 +24,12 @@ describe("GET /api/server-update", () => {
 
     expect(await api.serverUpdate.get()).toEqual({
       currentVersion: "0.0.1",
-      update: { latestVersion: "9.0.0", isProtocolChange: false, command: "server" },
+      update: {
+        latestVersion: "9.0.0",
+        isProtocolChange: false,
+        isComposeChange: false,
+        command: "server",
+      },
     });
   });
 

@@ -1,11 +1,35 @@
+import { readdirSync } from "node:fs";
+
+import { schemaVersion } from "@halinka/workflow";
 import { describe, expect, it } from "vitest";
 
-import { isSshHostKey, limitChangedFiles, pushedBranchWriteSchema } from "./controlPlane";
+import {
+  isSshHostKey,
+  limitChangedFiles,
+  protocolVersion,
+  pushedBranchWriteSchema,
+} from "./controlPlane";
+
+const newestResolvedFixture = () => {
+  const folder = new URL(`../../workflow/src/resolvedFixtures/${schemaVersion}/`, import.meta.url);
+  const newest = readdirSync(folder)
+    .sort((a, b) => Number.parseInt(a) - Number.parseInt(b))
+    .at(-1);
+  return `${schemaVersion}/${newest}`;
+};
 
 const names = (count: number, length = 8) =>
   Array.from({ length: count }, (_, index) => String(index).padStart(length, "0"));
 
 describe("controlPlane", () => {
+  // A runner uses the claimed workflow with no parse: a new shape of it needs a new `protocolVersion`.
+  it("pins the protocol version to the newest resolved workflow fixture", () => {
+    expect({ fixture: newestResolvedFixture(), protocolVersion }).toEqual({
+      fixture: "1/1.json",
+      protocolVersion: 20,
+    });
+  });
+
   it("gives all names, sorted, when they are in the limits", () => {
     expect(limitChangedFiles(["b.ts", "a.ts"])).toEqual({
       changedFiles: ["a.ts", "b.ts"],

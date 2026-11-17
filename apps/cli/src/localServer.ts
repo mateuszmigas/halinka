@@ -11,7 +11,7 @@ import { halinkaHome } from "@halinka/utils/halinkaHome";
 import { fail, failWithError } from "./args";
 import { loadMasterKey } from "./loadMasterKey";
 import { deleteLocalServerUrl, writeLocalServerUrl } from "./localServerUrl";
-import { isSourceBuild, readBuild } from "./readBuild";
+import { isSourceBuild, readBuild, readComposeVersion } from "./readBuild";
 
 // The package has it next to the code, and a checkout has it in the portal app.
 const portalFolders = ["./portal", "../../portal/dist"].map((path) =>
@@ -67,7 +67,12 @@ export class LocalServer {
       ...(auth && { auth }),
       ...(host && { host }),
       // So tests and pnpm dev send no request to npm.
-      ...(!isSourceBuild(build) && { update: { command: hasLogin ? "server" : "start" } }),
+      ...(!isSourceBuild(build) && {
+        update: {
+          command: hasLogin ? "server" : "start",
+          composeVersion: await readComposeVersion(),
+        },
+      }),
     });
     await server.start().catch((error: unknown) => fail(errorMessage(error)));
     await writeLocalServerUrl(server.url);

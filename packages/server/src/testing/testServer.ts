@@ -30,6 +30,7 @@ import { createServices } from "../services";
 import { type ServerCommand, UpdateCheck } from "../updateCheck";
 import { hubot, logIn, octo, testAuthConfig } from "./testAuth";
 import { registerTestRunner, testKeyOf } from "./testDb";
+import { testComposeVersion } from "./testNpmRegistry";
 
 export const repoPath = "/code/app";
 export const linkPath = "/links/app-link";
@@ -221,7 +222,12 @@ export const createTestServer = async (
   const localRunnerId = options.isRemoteRunner ? undefined : runnerId;
   const serverSettings = await ServerSettings.load(createRepositories(db));
   const updateCheck =
-    options.command && new UpdateCheck(testBuild.version, options.command, serverSettings);
+    options.command &&
+    new UpdateCheck(
+      testBuild.version,
+      { command: options.command, composeVersion: testComposeVersion },
+      serverSettings,
+    );
   const services = createServices({
     db,
     build: testBuild,

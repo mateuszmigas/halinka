@@ -199,6 +199,13 @@ devcontainer file at the definition commit, the parsed workflow, the setup field
 of the files is unique per repo and path, so an unchanged workflow shares one row. Steps, retries, crash recovery and
 chat read only the snapshot.
 
+A snapshot stores the `schema_version` of the parse that made `resolved`. The claim fails a run with an older version,
+and a reopen or a retry refuses it: "Migrate the workflow and start a new run". A test pins the newest fixture (below)
+with `protocolVersion`, so a new schema or a new shape fails until `protocolVersion` goes up. Each file in `packages/workflow/src/resolvedFixtures/<schemaVersion>/` is a stored
+`resolved` of that version, and a test checks that `workflowSchema` reads each file of the current version with no
+change. A second test compares the parse of `docs/examples/reference.yml` with the newest file: a new shape adds a
+file, and a shape that an older file cannot follow needs a new `schemaVersion` and its folder.
+
 The code of a run starts from a commit, never from the working tree. A local repo reads `HEAD` and the `.halinka/`
 files of the working tree, also uncommitted, so a person can run an edit without a commit. A `github` repo reads the
 tip of the default branch (`definition_sha`); a pull request run starts its code from the head of the pull request
@@ -365,6 +372,9 @@ another kind. The run waits in `queued` with a wait reason.
   `config.yml` and all workflows (a new write path for several files and for `config.yml`).
 - The parse gives the reason of each key that an older schema had, in each later read. Rejected: reasons only in the
   output of the migration (after the write, each read gives "Unknown key" again).
+- A new shape of `resolved` (a new fixture) also changes `protocolVersion`: a runner uses the claimed workflow with no
+  parse, so an older runner drops a key that it does not know. Rejected: a change only with `schemaVersion` (a new
+  optional key reaches old runners).
 - A snapshot stores the `schema_version` that made its `resolved`. The claim fails a run with an older version, and a
   reopen refuses it, with "Migrate the workflow and start a new run". A `schemaVersion` change also changes
   `protocolVersion`. Rejected: fail all open runs at each update (runs that wait on a gate are lost with no schema

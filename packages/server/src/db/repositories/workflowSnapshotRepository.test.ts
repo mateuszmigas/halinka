@@ -1,3 +1,4 @@
+import { schemaVersion } from "@halinka/workflow";
 import { describe, expect, it } from "vitest";
 
 import { registerTestRunner, setUpTestDb } from "../../testing";
@@ -27,6 +28,7 @@ describe("WorkflowSnapshotRepository", () => {
       contentHash: expect.stringMatching(/^[0-9a-f]{64}$/),
       files,
       resolved,
+      schemaVersion,
       devcontainer: null,
       setupNetwork: [],
       setupRun: null,

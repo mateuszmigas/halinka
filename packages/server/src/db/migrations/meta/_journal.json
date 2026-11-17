@@ -43,6 +43,13 @@
       "when": 1794662827361,
       "tag": "0005_server_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794922804270,
+      "tag": "0006_snapshot_schema_version",
+      "breakpoints": true
     }
   ]
 }

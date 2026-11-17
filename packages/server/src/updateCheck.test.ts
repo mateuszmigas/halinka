@@ -3,7 +3,7 @@ import { fakeTimers } from "@halinka/utils/testing";
 import { describe, expect, it, onTestFinished, vi } from "vitest";
 
 import { ServerSettings } from "./serverSettings";
-import { stubNpmRegistry } from "./testing";
+import { stubNpmRegistry, testComposeVersion } from "./testing";
 import { UpdateCheck } from "./updateCheck";
 
 const rowWith = (updateCheck: boolean) => ({
@@ -15,6 +15,8 @@ const rowWith = (updateCheck: boolean) => ({
 
 const settingsWith = (updateCheck: boolean) => new ServerSettings(rowWith(updateCheck));
 
+const update = { command: "server", composeVersion: testComposeVersion } as const;
+
 const answerOf = (latest: object) => () => Response.json(latest);
 
 const checked = async (
@@ -22,7 +24,7 @@ const checked = async (
   { currentVersion = "1.2.3", settings = settingsWith(true) } = {},
 ) => {
   stubNpmRegistry(answerOf(latest));
-  const check = new UpdateCheck(currentVersion, "server", settings);
+  const check = new UpdateCheck(currentVersion, update, settings);
   await check.check();
   return check;
 };
@@ -40,11 +42,16 @@ const pendingRegistry = () =>
 
 describe("UpdateCheck", () => {
   it("gives a newer version from the npm registry", async () => {
-    const check = await checked({ version: "1.3.0", protocolVersion });
+    const check = await checked({
+      version: "1.3.0",
+      protocolVersion,
+      composeVersion: testComposeVersion,
+    });
 
     expect(check.status).toEqual({
       latestVersion: "1.3.0",
       isProtocolChange: false,
+      isComposeChange: false,
       command: "server",
     });
   });
@@ -83,6 +90,18 @@ describe("UpdateCheck", () => {
     expect(check.status?.isProtocolChange).toBe(false);
   });
 
+  it("names a Compose change", async () => {
+    const check = await checked({ version: "1.3.0", composeVersion: testComposeVersion + 1 });
+
+    expect(check.status?.isComposeChange).toBe(true);
+  });
+
+  it("finds no Compose change in a version without the field", async () => {
+    const check = await checked({ version: "1.3.0" });
+
+    expect(check.status?.isComposeChange).toBe(false);
+  });
+
   it("keeps the last version when the registry fails", async () => {
     const check = await checked({ version: "1.3.0", protocolVersion });
     stubNpmRegistry(() => new Response("Not found", { status: 404 }));
@@ -107,7 +126,7 @@ describe("UpdateCheck", () => {
 
   it("sends no request when the update check is off", async () => {
     const fetch = stubNpmRegistry();
-    const check = new UpdateCheck("1.2.3", "server", settingsWith(false));
+    const check = new UpdateCheck("1.2.3", update, settingsWith(false));
 
     await check.check();
 
@@ -116,7 +135,7 @@ describe("UpdateCheck", () => {
 
   it("sends one request at a time", async () => {
     const fetch = stubNpmRegistry();
-    const check = new UpdateCheck("1.2.3", "server", settingsWith(true));
+    const check = new UpdateCheck("1.2.3", update, settingsWith(true));
 
     await Promise.all([check.check(), check.check()]);
 
@@ -126,7 +145,7 @@ describe("UpdateCheck", () => {
   it("checks again after 24 hours", async () => {
     fakeTimers();
     const fetch = stubNpmRegistry();
-    const check = new UpdateCheck("1.2.3", "server", settingsWith(true));
+    const check = new UpdateCheck("1.2.3", update, settingsWith(true));
     check.start();
     onTestFinished(() => check.stop());
 
@@ -138,7 +157,7 @@ describe("UpdateCheck", () => {
   it("checks no more after a stop", async () => {
     fakeTimers();
     const fetch = stubNpmRegistry();
-    const check = new UpdateCheck("1.2.3", "server", settingsWith(true));
+    const check = new UpdateCheck("1.2.3", update, settingsWith(true));
     check.start();
     await check.stop();
 
@@ -172,7 +191,7 @@ describe("UpdateCheck", () => {
 
   it("starts no request after a stop", async () => {
     const fetch = stubNpmRegistry();
-    const check = new UpdateCheck("1.2.3", "server", settingsWith(true));
+    const check = new UpdateCheck("1.2.3", update, settingsWith(true));
     const changing = check.settingChanged();
 
     await check.stop();
@@ -183,7 +202,7 @@ describe("UpdateCheck", () => {
 
   it("stops a request that has not ended", async () => {
     const fetch = pendingRegistry();
-    const check = new UpdateCheck("1.2.3", "server", settingsWith(true));
+    const check = new UpdateCheck("1.2.3", update, settingsWith(true));
     void check.check();
 
     await check.stop();
@@ -194,7 +213,7 @@ describe("UpdateCheck", () => {
   it("logs nothing for a stopped request", async () => {
     pendingRegistry();
     const errors = spyOnErrors();
-    const check = new UpdateCheck("1.2.3", "server", settingsWith(true));
+    const check = new UpdateCheck("1.2.3", update, settingsWith(true));
     void check.check();
 
     await check.stop();

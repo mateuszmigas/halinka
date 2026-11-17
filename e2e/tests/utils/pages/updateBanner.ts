@@ -3,6 +3,7 @@ import { expect, type Page } from "@playwright/test";
 export type ServerUpdate = {
   latestVersion: string;
   isProtocolChange: boolean;
+  isComposeChange: boolean;
   command: "start" | "server";
 };
 

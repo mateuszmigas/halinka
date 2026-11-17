@@ -49,7 +49,7 @@ import { findStaleReview, nothingToPushReason, storePush } from "./pushLease";
 import { inRunTransaction, type RunBus, type RunChange } from "./runBus";
 import { closeEndedQuestions, endRun, releaseRun } from "./runEnd";
 import { noAuthorityReason } from "./runnerAccess";
-import { testRunReason } from "./runRefusals";
+import { isOlderSchema, olderSchemaReason, testRunReason } from "./runRefusals";
 import { agentFingerprint, credentialPlace, repoSecretPlace, type SecretCipher } from "./secrets";
 import type { GitHubAppService } from "./services/githubAppService";
 import { ServiceError } from "./services/serviceError";
@@ -265,9 +265,30 @@ export class ServerControlPlane implements ControlPlane {
       const claimed: ClaimedRun[] = [];
       let selections: AgentSelections | undefined;
       let budget = maxClaimBytes;
+      const claimRun = async (id: number) => {
+        const run = await workflowRun.claim(id, {
+          runnerId,
+          holder: instanceId,
+          sandboxKind: capabilities.sandboxKind,
+          leaseSeconds: this.options.leaseSeconds,
+        });
+        if (!run) throw new Error(`Run ${id} was not claimed`);
+        // A call id of an earlier lease cannot repeat anymore.
+        await repositories.runCall.deleteByRun(run.id);
+        changed(run.id, "state");
+        return { run, lease: { workflowRunId: run.id, lease: run.leaseToken } };
+      };
       while (claimed.length < capacity) {
         const next = await workflowRun.lockNextQueued(runnerId, capabilities.sandboxKind, skip);
         if (!next) break;
+        if (isOlderSchema(next)) {
+          const { lease } = await claimRun(next.id);
+          await endRun(repositories, lease, {
+            result: "failed",
+            error: olderSchemaReason(next.id),
+          });
+          continue;
+        }
         const reopen = await stepRun.findLastReopen(next.id);
         const steps = await stepRun.listRecorded(next.id, reopen);
         const { workflow, inputs, setupNetwork, setupRun } = next;
@@ -275,17 +296,7 @@ export class ServerControlPlane implements ControlPlane {
           JSON.stringify({ workflow, inputs, setupNetwork, setupRun, steps }),
         );
         if (bytes > budget && claimed.length > 0) break;
-        const run = await workflowRun.claim(next.id, {
-          runnerId,
-          holder: instanceId,
-          sandboxKind: capabilities.sandboxKind,
-          leaseSeconds: this.options.leaseSeconds,
-        });
-        if (!run) throw new Error(`Run ${next.id} was not claimed`);
-        // A call id of an earlier lease cannot repeat anymore.
-        await repositories.runCall.deleteByRun(run.id);
-        changed(run.id, "state");
-        const lease = { workflowRunId: run.id, lease: run.leaseToken };
+        const { run, lease } = await claimRun(next.id);
         if (bytes > maxClaimBytes) {
           await endRun(repositories, lease, { result: "failed", error: tooLargeError(bytes) });
           continue;

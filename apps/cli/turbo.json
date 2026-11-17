@@ -1,0 +1,13 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "test:unit": {
+      "inputs": [
+        "$TURBO_EXTENDS$",
+        "$TURBO_ROOT$/infrastructure/docker-compose.yml",
+        "$TURBO_ROOT$/infrastructure/env.template"
+      ]
+    }
+  }
+}

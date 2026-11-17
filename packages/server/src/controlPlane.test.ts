@@ -24,6 +24,7 @@ import {
   stepRuns,
   workflowRunEvents,
   workflowRuns,
+  workflowSnapshots,
 } from "./db/schema";
 import { defaultLeaseTimes } from "./leaseTimes";
 import { RunBus } from "./runBus";
@@ -1069,6 +1070,24 @@ describe("sync", () => {
     expect(await api.runs.get({ id })).toMatchObject({
       status: "failed",
       error: expect.stringContaining("more than a runner can get"),
+    });
+  });
+
+  it("fails a run of an older schema version at the claim", async () => {
+    const { db, api, plane, queue } = await connect();
+    const id = await queue();
+    await db.update(workflowSnapshots).set({ schemaVersion: 0 });
+
+    const { claimed } = await plane.sync({
+      held: [],
+      capacity: 1,
+      capabilities: worktreeRunner,
+    });
+
+    expect(claimed).toEqual([]);
+    expect(await api.runs.get({ id })).toMatchObject({
+      status: "failed",
+      error: expect.stringContaining("Migrate the workflow and start a new run"),
     });
   });
 

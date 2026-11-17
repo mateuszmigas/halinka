@@ -259,6 +259,8 @@ contract holds the range rules. The first setting is the update check (`isUpdate
 - The CLI gives the command that runs the server: `start` or `server`. Code run from source has no check.
 - A change of the setting stops a running request and forgets the answer. When the check is on again, it reads at
   once.
+- `isComposeChange`: the `composeVersion` of the answer differs from the one of the server. The banner then says to
+  download `docker-compose.yml` and `env.template` of the release again.
 - `serverUpdate.get` (Admins) gives the result. The portal shows a banner above each page. The banner gives the
   commands for the command of the server: back up, `docker compose pull` and `up -d`, or a start with
   `npx halinka@latest start`.
@@ -273,7 +275,9 @@ contract holds the range rules. The first setting is the update check (`isUpdate
   `dist/THIRD_PARTY_LICENSES.txt` from the license files of the bundled packages, or from `apps/cli/third-party-licenses/` for a
   package that ships none, and fails when a package has neither.
 - `apps/cli/package.json` states `protocolVersion`, so the update banner can read it from the npm registry; a test
-  checks that it equals the constant of `@halinka/protocol`.
+  checks that it equals the constant of `@halinka/protocol`. It also states `composeVersion`, which the CLI gives to
+  the update check. A test keeps the hashes of `infrastructure/docker-compose.yml` and `infrastructure/env.template`
+  with that version, so a change of the files fails until the version goes up.
 - The build writes `dist/build.json` with the build id ([runners.md](runners.md#decisions)); `halinka --version` prints
   the version and the start of that id.
 - Migrations, the portal and the `.mjs` scripts are copied to `dist`; the code reads them with
@@ -282,8 +286,19 @@ contract holds the range rules. The first setting is the update check (`isUpdate
 - `apps/cli` stays `private` until the owner publishes it. `pnpm test:pack` installs the tarball outside the checkout
   as a runner does (offline, with an empty npm cache), loads each chunk, and runs `init`, `start`, the portal and a
   workflow. The image (`infrastructure/Dockerfile`) unpacks the packed tarball of the build, on `node:24.20.0-bookworm-slim`, runs as `node`, and listens on
-  all addresses, so it needs a login. The Compose file
+  all addresses, so it needs a login. The Compose file runs `ghcr.io/mateuszmigas/halinka:latest` and
   fixes its subnet, so `HALINKA_TRUSTED_PROXY` stays right.
+
+## Release
+
+A push of a tag `vX.Y.Z` runs `.github/workflows/release.yml`. It fails when the tag has another form, differs from
+the version of `apps/cli/package.json`, or is on a commit that is not on `main`, and it runs `pnpm validate` first. It builds the image for `linux/amd64` and `linux/arm64` and pushes
+`ghcr.io/mateuszmigas/halinka:X.Y.Z`, and `:latest` when no higher version is on npm (an error of the registry other
+than 404 stops the release). The first stage builds once on
+the platform of the build host (`dist` has no native code), so both platforms hold one tarball. The workflow copies
+`/app/halinka.tgz` from the pushed image, creates the GitHub release with `docker-compose.yml` and `env.template`,
+then publishes the tarball to npm through trusted publishing (OIDC), as `previous` for a lower version. npm is last,
+because the update check reads it.
 
 ## Limits
 
@@ -352,11 +367,31 @@ contract holds the range rules. The first setting is the update check (`isUpdate
   `apps/cli/package.json`, builds once, and publishes `halinka@X.Y.Z` to npm and `ghcr.io/mateuszmigas/halinka:X.Y.Z`
   and `:latest`. Rejected: a manual run with a version input (git does not show which commit was published); a tag for
   the image and a manual `npm publish` (the two can differ).
+- `docker-compose.yml` names only the image, and `docker-compose.override.yml` adds the build from source, so a
+  checkout builds and an install with only `docker-compose.yml` pulls. The commands of the update banner,
+  `docker compose pull` and `up -d`, then update an install and never replace a build from source with a release, and
+  an install needs no clone. Rejected: `image:` and `build:` in one file (a
+  `pull` on a host that builds from source replaces its build with a release, which can be older than the database);
+  a version in `.env` (each update then needs an edit).
+- The tag workflow attaches `docker-compose.yml` and `env.template` to the GitHub release, and an
+  install downloads them from the latest release, so they match the image. When a release changes them, its notes and
+  the update banner say to download them again. Rejected: a download from `main` (it can be ahead of `:latest`, and an
+  update does not get the files again).
 - The update check is a server setting in the database, which admins change in the portal; `halinka start` reads the
   same setting. Server settings that an admin changes at run time live there too: a `server_settings` table with one
   row and a typed column per setting, which the server loads at start and keeps in one class. Rejected: an environment
   variable (a change needs a restart and access to the host); a key and a JSON value (defaults and checks in code, for
   a few settings).
+- `composeVersion` in `apps/cli/package.json` tells the update banner that a release changes the Compose files, and a
+  test with the hashes of the files makes a change raise it. Rejected: a hash of the files in the published
+  `package.json` (a change of a comment then asks each admin to download again); only the release notes (an admin
+  who follows the banner does not read them).
+- The release workflow runs `pnpm validate` on the tagged commit and refuses a commit that is not on `main`, because
+  the tests of `protocolVersion` and `composeVersion` guard what npm publishes, and npm does not take a version two
+  times. Rejected: the full Validate workflow (the e2e tests make a release slow and can block it with a flaky test);
+  no checks (a tag on a failed or unmerged commit publishes).
+- The workflow publishes to npm the tarball that it copies from the pushed image. Rejected: a second `pnpm pack` on
+  the workflow host (another build can give another build id).
 - The update check keeps its answer in memory, with its own 24 h timer. Rejected: a table (a restart reads again
   with one request); the sweep tick (it runs each 1 to 10 s).
 - A newer version is a numeric compare of `X.Y.Z`. Rejected: the `semver` package (the release workflow publishes

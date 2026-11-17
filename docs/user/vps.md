@@ -12,13 +12,24 @@ of the server, because a runner needs access to Docker.
 
 ## Install
 
-1. Clone this repository on the machine.
-2. Copy `infrastructure/.env.template` to `infrastructure/.env`, and fill it in. The template explains each value.
+1. Make a folder on the machine, and get the Compose file and the template of the settings of the latest release into
+   it:
+
+   ```sh
+   mkdir halinka && cd halinka
+   curl -fsSLO https://github.com/mateuszmigas/halinka/releases/latest/download/docker-compose.yml
+   curl -fsSL -o .env https://github.com/mateuszmigas/halinka/releases/latest/download/env.template
+   chmod 600 .env
+   ```
+
+2. Fill in `.env`. The template explains each value. Run the commands of this guide in this folder.
 3. Start the server:
 
    ```sh
-   docker compose -f infrastructure/docker-compose.yml up -d --build
+   docker compose up -d
    ```
+
+   Compose gets the image `ghcr.io/mateuszmigas/halinka:latest`.
 
 4. Open your host name, and log in as the GitHub user of `HALINKA_ADMIN_GITHUB`.
 
@@ -67,11 +78,11 @@ If this value is wrong, all clients share one limit of 60 requests per minute, a
 A named Tunnel needs no open port. A Quick Tunnel does not support server-sent events: the run page then shows a change
 only after a refresh.
 
-1. Create a Tunnel in the Cloudflare dashboard, and add the token to `infrastructure/.env` as `TUNNEL_TOKEN`.
+1. Create a Tunnel in the Cloudflare dashboard, and add the token to `.env` as `TUNNEL_TOKEN`.
 2. Start the connector on the machine, with the token from its environment and not on the command line:
 
    ```sh
-   export TUNNEL_TOKEN=$(sed -n 's/^TUNNEL_TOKEN=//p' infrastructure/.env)
+   export TUNNEL_TOKEN=$(sed -n 's/^TUNNEL_TOKEN=//p' .env)
    docker run -d --name halinka-tunnel --restart unless-stopped --network host -e TUNNEL_TOKEN \
      cloudflare/cloudflared:latest tunnel --no-autoupdate run
    ```
@@ -99,7 +110,7 @@ from another machine stop at Access.
 Back up the database, and keep the backup outside the machine:
 
 ```sh
-docker compose -f infrastructure/docker-compose.yml exec db pg_dump -U halinka halinka > halinka.sql
+docker compose exec db pg_dump -U halinka halinka > halinka.sql
 ```
 
 The `home_data` volume holds only the lock of the server and its URL, so it needs no backup.
@@ -109,11 +120,34 @@ cannot start.
 
 ## Upgrade
 
+When a new version is available, the portal shows a banner to Admins. Back up the database, then:
+
 ```sh
-git pull
-docker compose -f infrastructure/docker-compose.yml up -d --build
+docker compose pull
+docker compose up -d
 ```
 
-The server applies new database migrations when it starts. Back up the database first.
+The server applies new database migrations when it starts.
+
+An install from a clone of this repository, made with an older version of this guide, builds from source: see
+[Build from source](#build-from-source).
 
 The Compose file fixes the major version of Postgres. To change that version, restore a dump into a new volume.
+
+## Build from source
+
+To run code that has no release, build the image from a clone of this repository. Put `.env` in `infrastructure/`,
+then:
+
+```sh
+cd infrastructure
+docker compose up -d
+```
+
+In `infrastructure/`, Compose also loads `docker-compose.override.yml`, which builds the image from the clone. Each
+`up -d` builds it again, and `docker compose pull` does not replace it. To update, run `git pull`, then
+`docker compose up -d`. Do not give `-f docker-compose.yml`: Compose
+then does not load the override file and gets the release.
+
+Do not go back from a build of `main` to an older release: the database can have migrations that the release does not
+know.
