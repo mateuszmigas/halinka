@@ -273,7 +273,10 @@ contract holds the range rules. The first setting is the update check (`isUpdate
   where Node finds them next to the chunks; a package with dependencies fails
   the build. `halinka` has no npm dependencies. The build writes
   `dist/THIRD_PARTY_LICENSES.txt` from the license files of the bundled packages, or from `apps/cli/third-party-licenses/` for a
-  package that ships none, and fails when a package has neither.
+  package that ships none, and fails when a package has neither. The portal build writes
+  `apps/portal/dist/THIRD_PARTY_LICENSES.txt` in the same way, from the modules and assets of its bundle, the CSS
+  packages that Tailwind inlines, and the packages whose code has ids outside their folders: the runtime helpers of
+  Vite and Rolldown, and the DOMPurify copy of monaco-editor (`@halinka/utils/licenses`).
 - `apps/cli/package.json` states `protocolVersion`, so the update banner can read it from the npm registry; a test
   checks that it equals the constant of `@halinka/protocol`. It also states `composeVersion`, which the CLI gives to
   the update check. A test keeps the hashes of `infrastructure/docker-compose.yml` and `infrastructure/env.template`
@@ -407,3 +410,6 @@ because the update check reads it.
   request to npm).
 - `HALINKA_LEASE_SECONDS` and `HALINKA_SWEEP_SECONDS` stay environment variables for tests. Rejected: admin settings
   (no admin needs them, and a lease near the 5 s sync makes each run expire and go back to the queue).
+- The packages whose CSS Tailwind inlines are named by the package that imports them: `@halinka/ui/inlinedCssPackages`
+  for `styles.css`, and `apps/portal/vite.config.ts` for `tailwindcss`. Rejected: a parse of the `@import` lines
+  (Tailwind resolves them, not Vite, so the parse must copy its rules).

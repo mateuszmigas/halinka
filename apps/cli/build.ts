@@ -1,10 +1,11 @@
 import { chmod, cp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 
+import { licensesOfBundle, thirdPartyLicensesText } from "@halinka/utils/licenses";
 import { build, type Metafile } from "esbuild";
 
 import { buildIdOf } from "./buildId";
-import { copyExternalPackage, licensesOfBundle } from "./bundledPackages";
+import { copyExternalPackage, fallbackLicensesFolder } from "./bundledPackages";
 import { bundleOptions, externalPackages } from "./bundleOptions";
 
 const distFolder = join(import.meta.dirname, "dist");
@@ -29,13 +30,13 @@ const writeBuildId = async () => {
   await writeFile(join(distFolder, "build.json"), JSON.stringify({ id: buildIdOf(files) }));
 };
 
-// MIT, BSD and Apache-2.0 need their notices in each copy of the code.
 const writeThirdPartyLicenses = async (metafile: Metafile) => {
-  const licenses = await licensesOfBundle(Object.keys(metafile.inputs), import.meta.dirname);
-  await writeFile(
-    join(distFolder, "THIRD_PARTY_LICENSES.txt"),
-    `${licenses.map(({ text }) => text).join("\n\n---\n\n")}\n`,
+  const licenses = await licensesOfBundle(
+    Object.keys(metafile.inputs),
+    import.meta.dirname,
+    fallbackLicensesFolder,
   );
+  await writeFile(join(distFolder, "THIRD_PARTY_LICENSES.txt"), thirdPartyLicensesText(licenses));
 };
 
 // Node finds them next to the chunks: a runner needs no npm registry.

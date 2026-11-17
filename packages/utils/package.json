@@ -22,6 +22,7 @@
     "./halinkaHome": "./src/halinkaHome.ts",
     "./hash": "./src/hash.ts",
     "./isRecord": "./src/isRecord.ts",
+    "./licenses": "./src/licenses.ts",
     "./poll": "./src/poll.ts",
     "./repoFiles": "./src/repoFiles.ts",
     "./result": "./src/result.ts",

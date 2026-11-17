@@ -27,7 +27,7 @@ writes only the first; `start`, `server` and `runner` write only the second.
 
 - `setup` prints instructions for a coding agent that sets up Halinka, and changes nothing: it writes no skill or
   rules file in the repo. The text is in the package, so it agrees with the installed version. A test parses its
-  examples.
+  examples. For a team server, the agent pins the CLI to the version of that server.
 - `init` works in a git repo without `.halinka/`. It writes `.halinka/config.yml`, `.halinka/workflows/smoke.yml` and,
   with `--devcontainer create`, `.devcontainer/devcontainer.json`. It writes all files or none. The portal writes the
   same files (`@halinka/runner/repoSetup`). `init` registers the repo when this machine has a runner key and the server
@@ -170,3 +170,6 @@ Flags of `start` and `runner`:
   - `halinka doctor`: from a laptop most of its lines say "unknown".
   - `--json` on `check`: an agent reads the plain lines, and nothing else reads them.
   - a wizard with its own LLM or an MCP server: neither solves a problem that the CLI does not.
+- For a team server, `setup` tells the agent to read `version` from `GET /api/runner/manifest` and run
+  `npx halinka@<version>`, because an unpinned `npx halinka` takes the latest package. Rejected: `setup --server <url>`
+  that prints the pinned commands (the agent learns the server only in step 1 of the text).

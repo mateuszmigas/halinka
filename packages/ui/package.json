@@ -29,7 +29,8 @@
     "./components/*": "./src/components/*.tsx",
     "./lib/*": "./src/lib/*.ts",
     "./hooks/*": "./src/hooks/*.ts",
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./src/styles.css",
+    "./inlinedCssPackages": "./src/inlinedCssPackages.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

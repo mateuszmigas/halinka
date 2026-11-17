@@ -11,13 +11,11 @@ When a task is done, delete its file and its line here. A new task gets a file a
 
 ## Release
 
-Do these in this order.
-
-1. [releases](releases.md): the npm package and the image from one tag, and the update banner of the server.
-2. [npm-package](npm-package.md): publish the package `halinka`, when the owner says that it is ready.
+- [npm-package](npm-package.md): publish the package `halinka`, when the owner says that it is ready.
 
 ## Checks
 
+- [releases](releases.md): the first release from a real tag, and the update banner after two publishes.
 - [runner-install](runner-install.md): `halinka runner install` on other hosts, and its e2e tests.
 - [runner-update](runner-update.md): a real update of an installed runner, and the e2e tests of the start path.
 - [agent-setup](agent-setup.md): decisions on the example prompts, a Codex run, and the user guide.

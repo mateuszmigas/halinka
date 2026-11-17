@@ -120,6 +120,25 @@ process.stdout.write(String(loaded.length));`;
     expect(bundled).toMatch(/^ws@\S+ \(MIT\)$/m);
   });
 
+  test("carries the license notices of the portal bundle", () => {
+    const portal = readFileSync(
+      join(installed, "node_modules/halinka/dist/portal/THIRD_PARTY_LICENSES.txt"),
+      "utf8",
+    );
+
+    const packages = portal.match(/^\S+@\S+(?= \()/gm)?.map((id) => id.replace(/@[^@]+$/, ""));
+    expect(packages).toEqual(
+      expect.arrayContaining([
+        "react",
+        "@fontsource-variable/inter",
+        "tailwindcss",
+        "shadcn",
+        "dompurify",
+        "vite",
+      ]),
+    );
+  });
+
   test("writes the repo files with init", async () => {
     const repo = await TestRepo.create(join(root, "init-repo"), {});
 

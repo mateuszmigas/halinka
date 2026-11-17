@@ -13,16 +13,14 @@ Publish the package `halinka` to npm. This is the last step: publish only when t
   - Provenance needs `repository.url` equal to the GitHub repository:
     `{ "type": "git", "url": "git+https://github.com/mateuszmigas/halinka.git", "directory": "apps/cli" }`.
   - After the first image push: make the package `halinka` on ghcr public, or `docker compose pull` fails.
-- The portal bundle (`apps/portal/dist`) holds npm packages such as React and Radix with no license notices. Write
-  them as the CLI build writes `dist/THIRD_PARTY_LICENSES.txt`.
 - The manifest, the probe and the typed refusals are in; each version keeps them ([runners.md](../architecture/runners.md#decisions)).
-- An unpinned `npx halinka` takes the latest package, and a team server runs its own version, so `halinka check` can
-  differ from that server. Before the publish, make step 5 of `halinka setup` use `npx halinka@<version>`, with the
-  `version` of `GET /api/runner/manifest` (public, and each version keeps it).
 - After the publish, add this to the README: tell your coding agent "Run `npx halinka setup` and follow it." Not
   before: until we publish, `npx halinka` runs whatever package has that name.
 - Tell people who use `halinka ssh` to install the package globally.
 
 ## Checks
 
+- The codicon font of monaco-editor (`codicon.ttf` in the portal) comes from vscode-codicons, whose icons are
+  CC-BY-4.0. Neither the LICENSE nor the ThirdPartyNotices.txt of monaco-editor names it. Confirm whether the portal
+  notices need its attribution before the publish.
 - `npx halinka init` and `start` on a clean machine, from the registry.

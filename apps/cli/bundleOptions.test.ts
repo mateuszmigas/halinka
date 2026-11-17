@@ -1,10 +1,11 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { licensesOfBundle } from "@halinka/utils/licenses";
 import { build } from "esbuild";
 import { describe, expect, it } from "vitest";
 
-import { licensesOfBundle } from "./bundledPackages";
+import { fallbackLicensesFolder } from "./bundledPackages";
 import { bundleOptions } from "./bundleOptions";
 
 const { inputs, outputs } = (await build({ ...bundleOptions, write: false })).metafile;
@@ -81,7 +82,11 @@ describe("the bundle", () => {
   it("finds a license text for each bundled npm package", async () => {
     const bundled = new Set(bundledPackagesOf(Object.keys(inputs)));
 
-    const licenses = await licensesOfBundle(Object.keys(inputs), import.meta.dirname);
+    const licenses = await licensesOfBundle(
+      Object.keys(inputs),
+      import.meta.dirname,
+      fallbackLicensesFolder,
+    );
 
     expect(new Set(licenses.map(({ name }) => name))).toEqual(bundled);
   });

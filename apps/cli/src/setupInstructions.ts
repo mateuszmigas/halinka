@@ -89,6 +89,14 @@ the exact link or command, stop, and continue when the person says that it is do
 1. Which server? "local": a server and a runner on this machine. Or the URL of a team server.
 2. Does the repo stay on this machine, or does a team server read it from GitHub?
 
+For a team server, get its version: \`curl -fsS <url>/api/runner/manifest\` gives JSON with \`version\` and \`buildId\`. In each command of these
+instructions, write \`npx halinka@<version>\` in place of \`npx halinka\`. Then the CLI checks the files as that server does. Use \`npx halinka\`
+and tell the person that the CLI can differ from the server if one of these applies:
+
+- The answer has no \`version\` of the form X.Y.Z, for example a login page.
+- \`buildId\` is "source": the server runs from a checkout.
+- \`npm view halinka@<version> version\` prints nothing.
+
 Then ask if runs may use a container. A run in a devcontainer needs Docker on the runner. A run in a worktree has no sandbox, so only use it
 if the person accepts this. A run that GitHub starts always needs a container.
 

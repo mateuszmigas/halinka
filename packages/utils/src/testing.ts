@@ -17,6 +17,15 @@ export const writeFiles = async (folder: string, files: Record<string, string>) 
   }
 };
 
+export const tempFolderWith = async (files: Record<string, string>) => {
+  const folder = await tempFolder();
+  await writeFiles(folder, files);
+  return folder;
+};
+
+export const packageJsonText = (name: string, fields: Record<string, unknown> = {}) =>
+  JSON.stringify({ name, version: "1.0.0", license: "MIT", ...fields });
+
 type FakedTimers = NonNullable<NonNullable<Parameters<typeof vi.useFakeTimers>[0]>["toFake"]>;
 
 // The real timers come back when the test finishes.
