@@ -107,7 +107,8 @@ shadcn on Base UI (`@halinka/ui`).
 - `repos.register` refuses a folder without `.halinka/config.yml` with `REPO_NOT_SET_UP` and its devcontainers. The
   portal then shows "Init and register": `repos.init` makes the runner write the files of `halinka init`, then registers
   the folder. A local runner gets `server: local`. A remote runner gets `HALINKA_PUBLIC_URL` on a server with a login,
-  and the origin of the request otherwise.
+  and the origin of the request otherwise. The panel says before the write that a remote runner's file names the URL,
+  because the portal does not know which runner is local.
 
 ## Workflow editor
 
@@ -310,3 +311,6 @@ charts of Home, in a lazy chunk. The owner chose it.
 - On a phone, the open pane of the run page is a search param of the run route (`pane=step`). Rejected: `useState`
   (the Back button of the phone then leaves the run page); the selected step run in `pin` (a tap on the current step
   clears `pin`).
+- The init panel shows the note on the committed server URL to each runner, before the write. Rejected: `isLocal` on
+  the runner list to show it only for a remote runner (an API field for one sentence); a note after the write (the
+  panel closes on success).

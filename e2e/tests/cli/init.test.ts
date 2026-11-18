@@ -26,6 +26,26 @@ test.describe("halinka init", () => {
     await repo.expectNoFile(devcontainerPath);
   });
 
+  test("warns that the committed config names a remote server", async ({ halinka }) => {
+    const repo = await halinka.createRepo();
+
+    const cli = await halinka
+      .init(repo, ["--server", "https://halinka.example.com/", "--devcontainer", "none"])
+      .expectExit(0);
+
+    await cli.expectOutput(".halinka/config.yml names https://halinka.example.com");
+  });
+
+  test("does not warn of the server in the config for a loopback server", async ({ halinka }) => {
+    const repo = await halinka.createRepo();
+
+    const cli = await halinka
+      .init(repo, ["--server", "http://127.0.0.1:7070", "--devcontainer", "none"])
+      .expectExit(0);
+
+    await cli.expectNoOutputAtClose(".halinka/config.yml names");
+  });
+
   test("says nothing of the registration on a machine without a runner key", async ({
     halinka,
   }) => {

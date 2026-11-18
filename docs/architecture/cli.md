@@ -32,7 +32,8 @@ writes only the first; `start`, `server` and `runner` write only the second.
   with `--devcontainer create`, `.devcontainer/devcontainer.json`. It writes all files or none. The portal writes the
   same files (`@halinka/runner/repoSetup`). `init` registers the repo when this machine has a runner key and the server
   answers. It prints the reason of a refusal; without a key, the next steps say how to make the machine a runner. It
-  never creates a key or starts a process.
+  never creates a key or starts a process. With a URL that is not loopback as the server, it warns
+  that the committed `config.yml` names that server.
 - `check` parses `.halinka/` with the parsers and presets of the installed CLI, and checks that the devcontainer file
   exists. It needs no server. A parser problem prints as `path:line:column message`. Any problem gives exit code 1.
 - `migrate` uses `migrateDefinition` ([workflows.md](workflows.md#files)) to change the `.halinka/` files that have no
@@ -173,3 +174,10 @@ Flags of `start` and `runner`:
 - For a team server, `setup` tells the agent to read `version` from `GET /api/runner/manifest` and run
   `npx halinka@<version>`, because an unpinned `npx halinka` takes the latest package. Rejected: `setup --server <url>`
   that prints the pinned commands (the agent learns the server only in step 1 of the text).
+- `init --server <url>` writes the URL in `.halinka/config.yml` and warns. Rejected: the URL only in the settings of
+  the machine, as `halinka use` does (a team repo then needs each person to select the server).
+- The example `issue-to-pr.yml` tells the review to request changes only for blocking issues, in its summary, which
+  the next loop pass reads. The review writes copied code and changes that are not in the issue in the output `notes`,
+  and the approval message shows them to the person. The implement prompt asks for the pull request text, because the
+  body is the summary of the last loop pass. Rejected: copied code and changes that are not in the issue as blocking
+  (they use more of the 3 loop passes); the old prompts (a review approved copied code, and a body said only "Fixed the review findings").

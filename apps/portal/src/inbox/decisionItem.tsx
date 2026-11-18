@@ -18,7 +18,7 @@ export const DecisionItem = (props: DecisionItemProps) => {
 
   return (
     <div className="flex flex-col gap-2">
-      <p>{item.message}</p>
+      <p className="whitespace-pre-wrap">{item.message}</p>
       {item.resolvedAt === undefined ? (
         <DecisionForm key={item.id} itemId={item.id} kind={item.kind} />
       ) : (

@@ -43,6 +43,7 @@ steps:
           Title: \${{ inputs.issue_title }}
           Text: \${{ inputs.issue_body }}
           Review findings: \${{ loop.previous.code_review.summary ?? 'none' }}
+          Write your summary as the text of the pull request: what the branch changes against its base, and why.
         gates:
           - name: tests
             run: pnpm test
@@ -51,12 +52,20 @@ steps:
         type: agent
         agent: claude-code
         permissions: { write: false }
-        prompt: Review the branch diff against its base. Report only blocking issues.
+        prompt: |
+          Review the branch diff against its base, for issue #\${{ inputs.issue_number }}.
+          Title: \${{ inputs.issue_title }}
+          Text: \${{ inputs.issue_body }}
+          Request changes only for blocking issues, and write them in your summary. Write copied code and changes
+          that are not in the issue in the output notes, or "none".
         outcomes: [approve, changes_requested]
+        outputs: { notes: string }
 
   - id: approve
     type: approval
-    message: Review the diff of issue \${{ inputs.issue_number }}
+    message: |
+      Review the diff of issue \${{ inputs.issue_number }}.
+      Notes of the review: \${{ steps.code_review.outputs.notes }}
     reviewers: [code_review]
 
   # Needs the GitHub App, or a gh login on the runner.

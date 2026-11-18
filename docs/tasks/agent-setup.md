@@ -3,16 +3,6 @@
 `halinka setup` and `halinka check` are built ([cli.md](../architecture/cli.md#set-up-a-repo)). The first real run on
 a GitHub repo passed.
 
-## To do
-
-- Decide if the example review prompt asks for copies and side effects. It says "Report only blocking issues", so a
-  review can approve copied code and side effects.
-- Decide if the implement prompt asks for a summary that a person reads in a pull request (what changed and why). The
-  pull request body is `steps.implement.summary`.
-- Decide if `halinka init --server <url>` warns, or if the URL moves to the settings of the machine (`halinka use`
-  exists). It writes the URL in a committed file, and `server` selects a server only for the CLI.
-- A guide in `docs/user` for the whole path. The GitHub App, keys and workflows have no user guide.
-
 ## Checks
 
 - A Codex run with a ChatGPT login after the change to exact credential paths, at the pinned codex-acp version (it uses

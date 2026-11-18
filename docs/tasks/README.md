@@ -18,7 +18,7 @@ When a task is done, delete its file and its line here. A new task gets a file a
 - [releases](releases.md): the first release from a real tag, and the update banner after two publishes.
 - [runner-install](runner-install.md): `halinka runner install` on other hosts, and its e2e tests.
 - [runner-update](runner-update.md): a real update of an installed runner, and the e2e tests of the start path.
-- [agent-setup](agent-setup.md): decisions on the example prompts, a Codex run, and the user guide.
+- [agent-setup](agent-setup.md): a Codex run, and a run that a label starts.
 - [github](github.md): push, pull requests and triggers on a real GitHub.
 - [docker-in-container](docker-in-container.md): Compose and amd64.
 - [image-locks](image-locks.md): `FileLocks` on a real VPS.

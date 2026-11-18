@@ -10,7 +10,7 @@ import { newDevcontainerPath } from "@halinka/workflow";
 import { fail as exit, failWithUsage, parseCommandArgs } from "./args";
 import { findRepoRoot } from "./findRepoRoot";
 import { registerRepo } from "./registerRepo";
-import { parseServer, type ServerOptions } from "./serverChoice";
+import { isLoopback, parseServer, type ServerOptions } from "./serverChoice";
 
 const usage = `Usage: halinka init [options]
 
@@ -140,6 +140,11 @@ export const init = async (args: string[]) => {
     (error: unknown) => exit(errorMessage(error)),
   );
   for (const path of files) log.success(`Wrote ${path}`);
+  if (server !== "local" && !isLoopback(new URL(server).hostname)) {
+    log.warn(
+      `.halinka/config.yml names ${server}. Each person who can read the repo can see this URL. To keep it private, write server: local. Then log in, and run halinka use ${server}.`,
+    );
+  }
 
   const registration = await registerRepo(serverUrl, root);
   if (registration.ok) log.success(`Registered the repo on ${server}`);

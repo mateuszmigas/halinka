@@ -20,6 +20,7 @@ The commands are in [cli.md](docs/architecture/cli.md).
 
 ## Guides
 
+- [Set up a repo](docs/user/setup.md)
 - [Run the server on a VPS](docs/user/vps.md)
 - [Add a runner](docs/user/runners.md)
 - [Devcontainers](docs/user/devcontainers.md)
