@@ -378,6 +378,9 @@ because the update check reads it.
 - The first npm publish is by hand, from the tarball of the image, because npm sets a trusted publisher only on a
   package that exists. Later versions go through OIDC. Rejected: an `NPM_TOKEN` secret for the first run (a long-lived
   token in the repository).
+- The release workflow publishes to npm directly, because a tag on `main` is the approval of the owner. Rejected:
+  staged publishing (`npm stage publish`; each release waits for an approval with 2FA, and the update banner sees it
+  only after that).
 - `docker-compose.yml` names only the image, and `docker-compose.override.yml` adds the build from source, so a
   checkout builds and an install with only `docker-compose.yml` pulls. The commands of the update banner,
   `docker compose pull` and `up -d`, then update an install and never replace a build from source with a release, and
