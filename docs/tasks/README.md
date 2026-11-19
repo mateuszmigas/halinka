@@ -35,6 +35,8 @@ When a task is done, delete its file and its line here. A new task gets a file a
 - [cost-budgets](cost-budgets.md): budgets beyond one run.
 - [run-page](run-page.md): small fixes of the run page.
 - [orphan-sandboxes](orphan-sandboxes.md): a sweep of containers and checkouts with no run.
+- [pr-outcome](pr-outcome.md): the state of the pull request of a run (open, merged, closed).
+- [step-artifacts](step-artifacts.md): files of a step that the run keeps after the workspace TTL.
 
 ## Later
 
