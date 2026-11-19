@@ -6,7 +6,7 @@ import { licensesOfBundle } from "./licenses";
 import { packageJsonText, tempFolderWith } from "./testing";
 
 const licensesIn = (folder: string, bundledFiles: string[]) =>
-  licensesOfBundle(bundledFiles, folder, join(folder, "fallback"));
+  licensesOfBundle(bundledFiles, folder, join(folder, "added"));
 
 describe("licensesOfBundle", () => {
   it("takes the license file of a bundled package", async () => {
@@ -31,15 +31,27 @@ describe("licensesOfBundle", () => {
     expect(license?.text).toBe("a@1.0.0 (MIT)\n\nNotices of a");
   });
 
-  it("takes the license text of the fallback folder for a package that ships none", async () => {
+  it("takes the license text of the added folder for a package that ships none", async () => {
     const folder = await tempFolderWith({
       "node_modules/@a/b/package.json": packageJsonText("@a/b"),
-      "fallback/@a__b.txt": "License of @a/b\n",
+      "added/@a__b.txt": "License of @a/b\n",
     });
 
     const [license] = await licensesIn(folder, ["node_modules/@a/b/lib/index.js"]);
 
     expect(license?.text).toBe("@a/b@1.0.0 (MIT)\n\nLicense of @a/b");
+  });
+
+  it("adds the text of the added folder to the license file of a package", async () => {
+    const folder = await tempFolderWith({
+      "node_modules/a/package.json": packageJsonText("a"),
+      "node_modules/a/LICENSE": "License of a",
+      "added/a.txt": "Notice of a font in a\n",
+    });
+
+    const [license] = await licensesIn(folder, ["node_modules/a/index.js"]);
+
+    expect(license?.text).toBe("a@1.0.0 (MIT)\n\nLicense of a\n\nNotice of a font in a");
   });
 
   it("takes an absolute path of a bundled file", async () => {
@@ -51,13 +63,13 @@ describe("licensesOfBundle", () => {
     const licenses = await licensesOfBundle(
       [join(folder, "node_modules/a/index.js")],
       "/",
-      join(folder, "fallback"),
+      join(folder, "added"),
     );
 
     expect(licenses.map(({ id }) => id)).toEqual(["a@1.0.0"]);
   });
 
-  it("fails for a package with no license file and no fallback text", async () => {
+  it("fails for a package with no license file and no added text", async () => {
     const folder = await tempFolderWith({ "node_modules/a/package.json": packageJsonText("a") });
 
     const licenses = licensesIn(folder, ["node_modules/a/index.js"]);

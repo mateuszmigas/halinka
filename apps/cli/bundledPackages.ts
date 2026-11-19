@@ -7,7 +7,7 @@ type PackageJson = {
   optionalDependencies?: Record<string, string>;
 };
 
-export const fallbackLicensesFolder = join(import.meta.dirname, "third-party-licenses");
+export const addedLicensesFolder = join(import.meta.dirname, "third-party-licenses");
 
 // The copy holds no dependency of the package, so the package must have none.
 export const copyExternalPackage = async (from: string, to: string) => {

@@ -363,7 +363,7 @@ The sandbox of each run (container and checkout) is stored on the server, and th
 - A build has a version and a build id: the sha256 of the files of `dist` and `apps/cli/package.json`, written to
   `dist/build.json` by the build. `dist` holds all npm code, so the lockfile adds nothing; a change of the website or a test tool keeps the id. A rebuild of the same code gives the same id. Code run from
   source has the id `source`. Rejected: the sha512 of the packed tarball as the id (the tarball holds the build, so it
-  cannot hold its own hash); the version only (each build from a checkout is `0.0.1`); only the files of `dist` (`package.json` sets `type`, `bin` and
+  cannot hold its own hash); the version only (each build from a checkout has the same version); only the files of `dist` (`package.json` sets `type`, `bin` and
   `engines`); `pnpm-lock.yaml` in the hash (a change of the website or a test tool marks each runner "out of
   date", and the runner does not install by it).
 - A runner reports its build in the capabilities of each `sync`. Rejected: a field of the hello (a change of the signed

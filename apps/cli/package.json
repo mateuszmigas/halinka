@@ -1,11 +1,15 @@
 {
   "name": "halinka",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "protocolVersion": 20,
   "composeVersion": 1,
-  "private": true,
   "description": "Self-hostable agent orchestration for the software development lifecycle",
   "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mateuszmigas/halinka.git",
+    "directory": "apps/cli"
+  },
   "type": "module",
   "bin": {
     "halinka": "dist/main.js"

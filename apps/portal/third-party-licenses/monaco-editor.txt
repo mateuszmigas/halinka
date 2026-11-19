@@ -1,0 +1,4 @@
+The codicon font (codicon.ttf) in monaco-editor:
+
+"Codicons" by Microsoft Corporation (https://github.com/microsoft/vscode-codicons) is licensed under the Creative
+Commons Attribution 4.0 International License (https://creativecommons.org/licenses/by/4.0/). We made no changes.

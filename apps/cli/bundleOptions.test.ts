@@ -5,7 +5,7 @@ import { licensesOfBundle } from "@halinka/utils/licenses";
 import { build } from "esbuild";
 import { describe, expect, it } from "vitest";
 
-import { fallbackLicensesFolder } from "./bundledPackages";
+import { addedLicensesFolder } from "./bundledPackages";
 import { bundleOptions } from "./bundleOptions";
 
 const { inputs, outputs } = (await build({ ...bundleOptions, write: false })).metafile;
@@ -85,7 +85,7 @@ describe("the bundle", () => {
     const licenses = await licensesOfBundle(
       Object.keys(inputs),
       import.meta.dirname,
-      fallbackLicensesFolder,
+      addedLicensesFolder,
     );
 
     expect(new Set(licenses.map(({ name }) => name))).toEqual(bundled);

@@ -272,11 +272,13 @@ contract holds the range rules. The first setting is the update check (`isUpdate
   command. PGlite and the devcontainer CLI find their files by path, so the build copies them to `dist/node_modules`,
   where Node finds them next to the chunks; a package with dependencies fails
   the build. `halinka` has no npm dependencies. The build writes
-  `dist/THIRD_PARTY_LICENSES.txt` from the license files of the bundled packages, or from `apps/cli/third-party-licenses/` for a
-  package that ships none, and fails when a package has neither. The portal build writes
+  `dist/THIRD_PARTY_LICENSES.txt` from the license files of the bundled packages and from
+  `apps/cli/third-party-licenses/`, and fails when a package has neither. The portal build writes
   `apps/portal/dist/THIRD_PARTY_LICENSES.txt` in the same way, from the modules and assets of its bundle, the CSS
   packages that Tailwind inlines, and the packages whose code has ids outside their folders: the runtime helpers of
-  Vite and Rolldown, and the DOMPurify copy of monaco-editor (`@halinka/utils/licenses`).
+  Vite and Rolldown, and the DOMPurify copy of monaco-editor (`@halinka/utils/licenses`). A file
+  `<name>.txt` in `third-party-licenses/` adds to the license files of that package: the portal adds the CC-BY-4.0
+  notice of the codicon font, because monaco-editor bundles the font and names its license nowhere.
 - `apps/cli/package.json` states `protocolVersion`, so the update banner can read it from the npm registry; a test
   checks that it equals the constant of `@halinka/protocol`. It also states `composeVersion`, which the CLI gives to
   the update check. A test keeps the hashes of `infrastructure/docker-compose.yml` and `infrastructure/env.template`
@@ -370,6 +372,12 @@ because the update check reads it.
   `apps/cli/package.json`, builds once, and publishes `halinka@X.Y.Z` to npm and `ghcr.io/mateuszmigas/halinka:X.Y.Z`
   and `:latest`. Rejected: a manual run with a version input (git does not show which commit was published); a tag for
   the image and a manual `npm publish` (the two can differ).
+- The repository is public under `AGPL-3.0-only`, and the first release is `0.1.0`. Rejected: a private repository
+  with a public image and package (the GitHub release files and the links of the update banner and the website give
+  404, and npm adds no provenance).
+- The first npm publish is by hand, from the tarball of the image, because npm sets a trusted publisher only on a
+  package that exists. Later versions go through OIDC. Rejected: an `NPM_TOKEN` secret for the first run (a long-lived
+  token in the repository).
 - `docker-compose.yml` names only the image, and `docker-compose.override.yml` adds the build from source, so a
   checkout builds and an install with only `docker-compose.yml` pulls. The commands of the update banner,
   `docker compose pull` and `up -d`, then update an install and never replace a build from source with a release, and

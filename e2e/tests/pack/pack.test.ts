@@ -139,6 +139,15 @@ process.stdout.write(String(loaded.length));`;
     );
   });
 
+  test("carries the codicon notice in the portal license notices", () => {
+    const portal = readFileSync(
+      join(installed, "node_modules/halinka/dist/portal/THIRD_PARTY_LICENSES.txt"),
+      "utf8",
+    );
+
+    expect(portal).toContain('"Codicons" by Microsoft Corporation');
+  });
+
   test("writes the repo files with init", async () => {
     const repo = await TestRepo.create(join(root, "init-repo"), {});
 

@@ -11,7 +11,7 @@ When a task is done, delete its file and its line here. A new task gets a file a
 
 ## Release
 
-- [npm-package](npm-package.md): publish the package `halinka`, when the owner says that it is ready.
+- [npm-package](npm-package.md): publish `halinka@0.1.0` from a public repository.
 
 ## Checks
 

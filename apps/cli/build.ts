@@ -5,7 +5,7 @@ import { licensesOfBundle, thirdPartyLicensesText } from "@halinka/utils/license
 import { build, type Metafile } from "esbuild";
 
 import { buildIdOf } from "./buildId";
-import { copyExternalPackage, fallbackLicensesFolder } from "./bundledPackages";
+import { copyExternalPackage, addedLicensesFolder } from "./bundledPackages";
 import { bundleOptions, externalPackages } from "./bundleOptions";
 
 const distFolder = join(import.meta.dirname, "dist");
@@ -34,7 +34,7 @@ const writeThirdPartyLicenses = async (metafile: Metafile) => {
   const licenses = await licensesOfBundle(
     Object.keys(metafile.inputs),
     import.meta.dirname,
-    fallbackLicensesFolder,
+    addedLicensesFolder,
   );
   await writeFile(join(distFolder, "THIRD_PARTY_LICENSES.txt"), thirdPartyLicensesText(licenses));
 };
