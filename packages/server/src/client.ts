@@ -54,10 +54,11 @@ export const createApiClient = (url: string, options: ApiClientOptions = {}): Ap
     new OpenAPILink(contract, {
       url: `${url}/api`,
       // The server refuses a write without this header, and oRPC sends none without a body.
-      fetch: (request, init) => {
+      fetch: (request, init, { signal }) => {
         if (request.method !== "GET") request.headers.set("content-type", "application/json");
         if (token) request.headers.set("authorization", `Bearer ${token}`);
-        return send(request, init);
+        // Node follows the signal of a Request through a weak reference, so a GC can lose the abort.
+        return send(request, { ...init, signal });
       },
     }),
   );
