@@ -5,16 +5,13 @@ in [overview.md](../architecture/overview.md#decisions).
 
 ## Checks
 
-- `v0.1.0` pushed the image for two platforms and the GitHub release with its files. Its npm step had no trusted
-  publisher, so `0.1.0` went to npm by hand, from the tarball of the image. Check at the next tag: the npm publish
-  through OIDC, with provenance, and a rerun after a failed npm step that uploads the release files again.
+- `v0.1.1` published to npm through OIDC, with provenance. `0.1.0` went to npm by hand. Not checked yet: a rerun after
+  a failed npm step uploads the release files again.
 - The first publish of a new package made the placeholder version `0.0.0-stage`. It stays in the version list.
-
 - From an installed build (the e2e suite runs the source): the GitHub login of `halinka server`; `halinka runner` from
   `versions/current`. On 2026-11-19, `0.1.0` from npm passed `halinka ssh`, `scp`, a port forward, `halinka open`, a
-  run in a devcontainer of `halinka start`, and `halinka server` on Postgres with `sslmode=verify-full`.
-- After the first two publishes: `https://registry.npmjs.org/halinka/latest` gives `protocolVersion`, and a server of
-  the older version shows the update banner. Until the first publish, each check logs a 404.
+  run in a devcontainer of `halinka start`, and `halinka server` on Postgres with `sslmode=verify-full`. `0.1.1` from
+  npm passed a run of 25 s with `halinka run`, and a `0.1.0` server showed the banner of `0.1.1`.
 
 ## Nice to have
 
