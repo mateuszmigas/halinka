@@ -5,9 +5,10 @@ in [overview.md](../architecture/overview.md#decisions).
 
 ## Checks
 
-- The first run of `.github/workflows/release.yml` on a real tag: the two platforms of the image, the tarball from the
-  image, the files of the GitHub release, and the npm publish through OIDC. A rerun after a failed npm step uploads
-  the release files again.
+- `v0.1.0` pushed the image for two platforms and the GitHub release with its files. Its npm step had no trusted
+  publisher, so `0.1.0` went to npm by hand, from the tarball of the image. Check at the next tag: the npm publish
+  through OIDC, with provenance, and a rerun after a failed npm step that uploads the release files again.
+- The first publish of a new package made the placeholder version `0.0.0-stage`. It stays in the version list.
 
 - From an installed build (the e2e suite runs the source): `halinka ssh <run>`, `halinka open` and `scp` against a
   runner (the bundled `ssh2`); `halinka start --runs-in docker` (the copied devcontainer CLI and its `scripts/`); the

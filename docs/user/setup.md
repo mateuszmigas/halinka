@@ -18,17 +18,16 @@ that GitHub starts always executes in a devcontainer.
 
 ## Get the command
 
-Until the package is published, build the command from a checkout. [The README](../../README.md#start-on-one-machine)
-tells how. This guide writes `halinka` for that command.
+Halinka needs Node.js 24.20 or later. This guide writes `halinka` for `npx halinka`. Install the package globally
+(`npm install -g halinka`) if you use `halinka ssh` ([runners.md](runners.md#halinka-ssh)).
 
 ## Write the files
 
 The files are in `.halinka/`. Commit them with the repo. Select one of the two ways:
 
-- **With a coding agent.** Tell your coding agent: "Run `halinka setup` and follow it." The agent asks which server
+- **With a coding agent.** Tell your coding agent: "Run `npx halinka setup` and follow it." The agent asks which server
   you use, where the repo is, and if runs may use a container. Then it writes the files, tests them, and stops at each
-  step that a person must do. You enter each key. The agent must not see a key. Until the package is published, tell
-  the agent to use your command in place of `npx halinka`.
+  step that a person must do. You enter each key. The agent must not see a key.
 - **By hand.** In the repo, run `halinka init`. It writes `.halinka/config.yml`, `.halinka/workflows/smoke.yml` and,
   with `--devcontainer create`, a devcontainer with a Node image. For a GitHub repo, use `--server local`.
 

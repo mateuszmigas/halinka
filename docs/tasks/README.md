@@ -9,10 +9,6 @@ this order:
 
 When a task is done, delete its file and its line here. A new task gets a file and a line in its group.
 
-## Release
-
-- [npm-package](npm-package.md): publish `halinka@0.1.0` from a public repository.
-
 ## Checks
 
 - [releases](releases.md): the first release from a real tag, and the update banner after two publishes.

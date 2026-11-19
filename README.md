@@ -5,18 +5,25 @@ workspaces, with gates, an inbox for people, and pull requests as the only way t
 
 ## Start on one machine
 
-The package is not published yet. From a checkout:
+Halinka needs Node.js 24.20 or later. In your repo, tell your coding agent: "Run `npx halinka setup` and follow it."
+
+To do the setup by hand:
+
+```sh
+npx halinka init
+npx halinka start
+```
+
+`init` writes `.halinka/` with a first workflow. `start` runs the server, the portal and a runner on
+`http://127.0.0.1:7070`. The commands are in [cli.md](docs/architecture/cli.md).
+
+To run from a checkout:
 
 ```sh
 pnpm install
 pnpm --filter @halinka/portal build
 pnpm start
 ```
-
-`pnpm start` runs the server, the portal and a runner on `http://127.0.0.1:7070`. In your repo, `halinka init` writes
-`.halinka/` with a first workflow, and `halinka setup` prints instructions for a coding agent that does the setup.
-Until the package is published, `pnpm --filter halinka build` makes the command: `node <checkout>/apps/cli/dist/main.js`.
-The commands are in [cli.md](docs/architecture/cli.md).
 
 ## Guides
 
