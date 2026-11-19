@@ -44,11 +44,11 @@ jobs:
             echo "::error::The tag $GITHUB_REF_NAME differs from the version $version of apps/cli/package.json."
             exit 1
           fi
-          status=$(curl -sS -o latest.json -w '%{http_code}' https://registry.npmjs.org/halinka/latest)
+          status=$(curl -sS -o "$RUNNER_TEMP/latest.json" -w '%{http_code}' https://registry.npmjs.org/halinka/latest)
           case "$status" in
             200)
-              latest=$(node -p 'require("./latest.json").version')
-              latest_compose=$(node -p 'require("./latest.json").composeVersion ?? ""')
+              latest=$(node -p 'require(process.env.RUNNER_TEMP + "/latest.json").version')
+              latest_compose=$(node -p 'require(process.env.RUNNER_TEMP + "/latest.json").composeVersion ?? ""')
               ;;
             404)
               latest=""
