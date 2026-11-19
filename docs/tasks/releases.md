@@ -8,10 +8,11 @@ in [overview.md](../architecture/overview.md#decisions).
 - `v0.1.1` published to npm through OIDC, with provenance. `0.1.0` went to npm by hand. Not checked yet: a rerun after
   a failed npm step uploads the release files again.
 - The first publish of a new package made the placeholder version `0.0.0-stage`. It stays in the version list.
-- From an installed build (the e2e suite runs the source): the GitHub login of `halinka server`; `halinka runner` from
-  `versions/current`. On 2026-11-19, `0.1.0` from npm passed `halinka ssh`, `scp`, a port forward, `halinka open`, a
-  run in a devcontainer of `halinka start`, and `halinka server` on Postgres with `sslmode=verify-full`. `0.1.1` from
-  npm passed a run of 25 s with `halinka run`, and a `0.1.0` server showed the banner of `0.1.1`.
+- From an installed build (the e2e suite runs the source): the GitHub login of `halinka server`. On 2026-11-19, `0.1.0`
+  from npm passed `halinka ssh`, `scp`, a port forward, `halinka open`, a run in a devcontainer of `halinka start`, and
+  `halinka server` on Postgres with `sslmode=verify-full`. `0.1.1` from npm passed a run of 25 s with `halinka run`, and
+  a `0.1.0` server showed the banner of `0.1.1`. A server from the `0.1.1` image and the release `docker-compose.yml`
+  replaced a build from source, and its runner started `0.1.1` from `versions/current`.
 
 ## Nice to have
 

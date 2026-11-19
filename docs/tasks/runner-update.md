@@ -2,7 +2,8 @@
 
 The update request, auto-update, the update at start, the status report, the failure state, the cleanup of versions
 and the self-update opt-out are built ([runners.md](../architecture/runners.md#connection)). Checked on a Linux host
-with three builds: Update with one restart, auto-update after a server rollback, a failed install.
+with three builds: Update with one restart, auto-update after a server rollback, a failed install. On 2026-11-19, an
+installed runner updated itself from `0.0.1` to `0.1.1` after a deploy of the release image, with one restart.
 
 ## To do
 
@@ -14,13 +15,14 @@ with three builds: Update with one restart, auto-update after a server rollback,
 
 ## Checks
 
-- The first update of an installed runner from a deploy of the server: the check of a real update.
 - "Interrupt and update" with a held run.
 - A protocol change.
 - The second failure of one build.
 
 ## Nice to have
 
+- A restart of the server makes the runner log "could not sync with the server" with the full stack of
+  `connection_closed`, after its own "Cannot connect" lines. Log no stack for an error that `isTransient` accepts.
 - After a failed update during a protocol change, the runner exits 78. If its status report did not reach the server,
   the request stays on the row until the runner syncs on the build of the server; the Runners page shows "update
   needed" anyway. Keep an undelivered report and send it at the next start.
