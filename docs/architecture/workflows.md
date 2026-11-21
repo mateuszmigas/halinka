@@ -21,7 +21,7 @@ messages and schedules.
   lines that no rule changes keep their format and comments. It returns the new source and each change. A key that
   an older schema had and that needs a decision of a person stays in the file; the parse gives its reason
   (`removedKeys` of `parseYaml`), not "Unknown key".
-- `config.yml`: `server` (`local` or the URL of the server), `devcontainer` (the path of the devcontainer file) and
+- `config.yml`: `devcontainer` (the path of the devcontainer file) and
   `setup`, which needs `devcontainer`: `network` (what the lifecycle commands and `setup.run` reach: `false` by
   default, `true`, or host names), `run` (one command per workspace, in the container) and `secrets` (names of repo
   secrets; only `run` gets them).

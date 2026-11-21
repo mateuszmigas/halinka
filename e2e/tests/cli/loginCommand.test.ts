@@ -28,6 +28,12 @@ const startApprovingServer = async (halinka: TestHalinka) => {
   return { url, headers };
 };
 
+const readLogins = async (halinka: TestHalinka) =>
+  JSON.parse(await readFile(join(halinka.home, "logins.json"), "utf8")) as {
+    tokens: Record<string, { token: string }>;
+    current?: string;
+  };
+
 test.describe("halinka login", () => {
   test("keeps the token in a file that only the user can read", async ({ halinka }) => {
     const server = await startApprovingServer(halinka);
@@ -35,17 +41,14 @@ test.describe("halinka login", () => {
     const cli = await halinka.run(["login", "--server", server.url]).expectExit(0);
 
     await cli.expectOutput("Logged in to");
-    const file = join(halinka.home, "logins.json");
-    expect(JSON.parse(await readFile(file, "utf8")).tokens[server.url].token).toBe(token);
-    expect((await stat(file)).mode & 0o777).toBe(0o600);
+    expect((await readLogins(halinka)).tokens[server.url]?.token).toBe(token);
+    expect((await stat(join(halinka.home, "logins.json"))).mode & 0o777).toBe(0o600);
   });
 
   test("sends the token to the server of the login", async ({ halinka }) => {
     const server = await startApprovingServer(halinka);
     await halinka.run(["login", "--server", server.url]).expectExit(0);
-    const repo = await halinka.createRepo({
-      ".halinka/config.yml": `schema_version: 1\nserver: ${server.url}\n`,
-    });
+    const repo = await halinka.createRepo({ ".halinka/config.yml": "schema_version: 1\n" });
     await halinka.start().then((local) => local.stop());
 
     await halinka.run(["run", "build", "--repo", repo.path]).expectExit(1);
@@ -58,7 +61,7 @@ test.describe("halinka login", () => {
     const other = await startApprovingServer(halinka);
     await halinka.run(["login", "--server", server.url]).expectExit(0);
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
     });
     await halinka.start().then((local) => local.stop());
 
@@ -82,11 +85,17 @@ test.describe("halinka logout", () => {
 
     await halinka.run(["logout"]).expectExit(0);
 
-    const { tokens, current } = JSON.parse(
-      await readFile(join(halinka.home, "logins.json"), "utf8"),
-    ) as { tokens: object; current?: string };
-    expect(tokens).toEqual({});
-    expect(current).toBeUndefined();
+    expect((await readLogins(halinka)).tokens).toEqual({});
+  });
+
+  test("keeps the selected server", async ({ halinka }) => {
+    const server = await startApprovingServer(halinka);
+    await halinka.run(["login", "--server", server.url]).expectExit(0);
+
+    await halinka.run(["logout"]).expectExit(0);
+
+    const cli = await halinka.run(["use"]).expectExit(0);
+    await cli.expectOutput(`halinka use selects ${server.url} for the next commands.`);
   });
 
   test("refuses a server without a login", async ({ halinka }) => {
@@ -105,34 +114,31 @@ test.describe("halinka logout", () => {
 });
 
 test.describe("halinka use", () => {
-  test("refuses a server without a login", async ({ halinka }) => {
+  test("names the login of a server that it selects without one", async ({ halinka }) => {
     const cli = halinka.run(["use", "https://halinka.example.com"]);
 
-    await cli.expectOutput("Log in first: halinka login --server https://halinka.example.com");
-    await cli.expectExit(1);
-  });
-});
-
-test.describe("a server that a repo selects", () => {
-  test("gets nothing before a login", async ({ halinka }) => {
-    const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: https://halinka.example.com\n",
-    });
-
-    const cli = halinka.run(["run", "build", "--repo", repo.path]);
-
-    await cli.expectOutput("selects the server https://halinka.example.com");
-    await cli.expectExit(1);
+    await cli.expectOutput(
+      "halinka use selects https://halinka.example.com. Log in first: halinka login --server https://halinka.example.com",
+    );
+    await cli.expectExit(0);
   });
 
-  test("gets nothing over http on another machine", async ({ halinka }) => {
-    const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: http://halinka.example.com\n",
-    });
+  test("says that HALINKA_SERVER_URL has priority", async ({ halinka }) => {
+    halinka.setServerUrl("https://halinka.example.com");
 
-    const cli = halinka.run(["run", "build", "--repo", repo.path]);
+    const cli = await halinka.run(["use", "local"]).expectExit(0);
 
-    await cli.expectOutput("without TLS. Use an https URL.");
-    await cli.expectExit(1);
+    await cli.expectOutput(
+      "HALINKA_SERVER_URL selects https://halinka.example.com. It has priority over halinka use.",
+    );
+  });
+
+  test("selects the server of this machine with local", async ({ halinka }) => {
+    await halinka.run(["use", "https://halinka.example.com"]).expectExit(0);
+
+    await halinka.run(["use", "local"]).expectExit(0);
+
+    const cli = await halinka.run(["use"]).expectExit(0);
+    await cli.expectOutput("The next commands use the server of this machine");
   });
 });

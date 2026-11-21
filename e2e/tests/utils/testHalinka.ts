@@ -111,7 +111,7 @@ export class TestHalinka {
       source,
     ]);
     const repo = await this.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
       ...Object.fromEntries(files),
     });
     const server = await this.start([], repo.path);

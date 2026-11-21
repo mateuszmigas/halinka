@@ -11,6 +11,7 @@ import {
 } from "@halinka/protocol";
 import { testBuild } from "@halinka/protocol/testing";
 import { hashOf } from "@halinka/utils/hash";
+import { createRepoConfig } from "@halinka/workflow";
 import { eq } from "drizzle-orm";
 import { vi } from "vitest";
 
@@ -57,7 +58,7 @@ export const devcontainerRunner = {
 export const testRunnerPackage = { path: "/nowhere/halinka.tgz", sha512: "0", size: 1 };
 
 export const devcontainerConfig =
-  "schema_version: 1\nserver: local\ndevcontainer: .devcontainer/devcontainer.json\n";
+  "schema_version: 1\ndevcontainer: .devcontainer/devcontainer.json\n";
 
 const runnerOf = (sandboxKind: SandboxKind) =>
   sandboxKind === "devcontainer" ? devcontainerRunner : worktreeRunner;
@@ -147,7 +148,7 @@ const repoFilesOf = (files: Record<string, string>) =>
 
 class FakeRunnerCommands implements RunnerCommands {
   readonly files: Record<string, string> = {
-    ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+    ".halinka/config.yml": "schema_version: 1\n",
     ".halinka/workflows/build.yml": buildWorkflow,
   };
   readonly baseCommitFiles: Record<string, string> = {};
@@ -173,10 +174,8 @@ class FakeRunnerCommands implements RunnerCommands {
     isTruncated: false,
   }));
   readonly listDevcontainers = vi.fn<RunnerCommands["listDevcontainers"]>(async () => []);
-  readonly setUpRepo = vi.fn<RunnerCommands["setUpRepo"]>(async ({ server, devcontainer }) => {
-    this.files[".halinka/config.yml"] = devcontainer
-      ? `schema_version: 1\nserver: ${server}\ndevcontainer: ${devcontainer}\n`
-      : `schema_version: 1\nserver: ${server}\n`;
+  readonly setUpRepo = vi.fn<RunnerCommands["setUpRepo"]>(async ({ devcontainer }) => {
+    this.files[".halinka/config.yml"] = createRepoConfig({ devcontainer });
     return { files: [".halinka/config.yml"] };
   });
   readonly pushBranch = vi.fn<RunnerCommands["pushBranch"]>(async () => {});

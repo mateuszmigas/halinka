@@ -9,7 +9,7 @@ test.describe("repos", () => {
     const server = await halinka.start();
     await server.expectRunnerConnected();
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
     });
     const reposPage = await new TestPortal(page, server).openRepos();
 
@@ -22,7 +22,7 @@ test.describe("repos", () => {
     const server = await halinka.start();
     await server.expectRunnerConnected();
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
     });
     const reposPage = await new TestPortal(page, server).openRepos();
 
@@ -48,7 +48,7 @@ test.describe("repos", () => {
     );
 
     await reposPage.expectRepo(repo.name);
-    await repo.expectFile(".halinka/config.yml", "schema_version: 1\nserver: local\n");
+    await repo.expectFile(".halinka/config.yml", "schema_version: 1\n");
   });
 
   test("opens the editor from the first problem of a workflow", async ({ halinka, page }) => {

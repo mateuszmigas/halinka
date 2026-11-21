@@ -57,7 +57,6 @@ export const createServices = ({
     connectedRunners,
     bus,
     gitHubApp,
-    localRunnerId,
   });
   const wakeRunner = createWakeRunner(repositories, connectedRunners);
   const run = new RunService({

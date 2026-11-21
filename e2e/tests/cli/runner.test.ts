@@ -95,7 +95,7 @@ test.describe("halinka runner", () => {
 
   test("refuses a repo outside its folders", async ({ halinka }) => {
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
     });
     const server = await startApprovedRunner(halinka, ["--root", await halinka.createFolder()]);
 
@@ -108,7 +108,7 @@ test.describe("halinka runner", () => {
 
   test("registers a repo in its folders", async ({ halinka }) => {
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
     });
     const server = await startApprovedRunner(halinka, ["--root", dirname(repo.path)]);
 

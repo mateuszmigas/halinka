@@ -48,21 +48,17 @@ describe("repoSetup", () => {
     const repoPath = await createRepo({ commit: false });
     const devcontainer = ".devcontainer/devcontainer.json";
 
-    expect(await setUpRepo({ repoPath, server: "local", devcontainer })).toEqual({
+    expect(await setUpRepo({ repoPath, devcontainer })).toEqual({
       files: [".halinka/config.yml", devcontainer, ".halinka/workflows/smoke.yml"],
     });
-    expect(await readConfig(repoPath)).toMatchObject({ value: { server: "local", devcontainer } });
+    expect(await readConfig(repoPath)).toMatchObject({ value: { devcontainer } });
   });
 
   it("keeps a devcontainer that the repo has", async () => {
     const repoPath = await createRepo({ commit: false });
     await writeDefinition(repoPath, ".devcontainer.json", '{ "image": "node" }');
 
-    await setUpRepo({
-      repoPath,
-      server: "https://halinka.example",
-      devcontainer: ".devcontainer.json",
-    });
+    await setUpRepo({ repoPath, devcontainer: ".devcontainer.json" });
 
     expect(await readFile(join(repoPath, ".devcontainer.json"), "utf8")).toBe(
       '{ "image": "node" }',
@@ -72,9 +68,9 @@ describe("repoSetup", () => {
   it("writes no devcontainer for none", async () => {
     const repoPath = await createRepo({ commit: false });
 
-    await setUpRepo({ repoPath, server: "local" });
+    await setUpRepo({ repoPath });
 
-    expect(await readConfig(repoPath)).toMatchObject({ value: { server: "local" } });
+    expect(await readConfig(repoPath)).toEqual({ ok: true, value: {} });
     expect(await pathExists(join(repoPath, ".devcontainer"))).toBe(false);
   });
 
@@ -83,19 +79,19 @@ describe("repoSetup", () => {
     await writeFile(join(repoPath, ".devcontainer"), "");
 
     await expect(
-      setUpRepo({ repoPath, server: "local", devcontainer: ".devcontainer/devcontainer.json" }),
+      setUpRepo({ repoPath, devcontainer: ".devcontainer/devcontainer.json" }),
     ).rejects.toMatchObject({ code: "invalid_definitions" });
     expect(await pathExists(join(repoPath, ".halinka"))).toBe(false);
   });
 
   it("keeps the files of one of two setups that run at the same time", async () => {
     const repoPath = await createRepo({ commit: false });
-    const setUp = () => setUpRepo({ repoPath, server: "local" });
+    const setUp = () => setUpRepo({ repoPath });
 
     const results = await Promise.allSettled([setUp(), setUp()]);
 
     expect(results.map(({ status }) => status).sort()).toEqual(["fulfilled", "rejected"]);
-    expect(await readConfig(repoPath)).toMatchObject({ value: { server: "local" } });
+    expect(await readConfig(repoPath)).toEqual({ ok: true, value: {} });
     expect(await pathExists(join(repoPath, ".halinka/workflows/smoke.yml"))).toBe(true);
   });
 
@@ -105,7 +101,7 @@ describe("repoSetup", () => {
     await symlink(outside, join(repoPath, ".devcontainer"));
 
     await expect(
-      setUpRepo({ repoPath, server: "local", devcontainer: ".devcontainer/devcontainer.json" }),
+      setUpRepo({ repoPath, devcontainer: ".devcontainer/devcontainer.json" }),
     ).rejects.toMatchObject({ code: "invalid_input" });
     expect(await pathExists(join(outside, "devcontainer.json"))).toBe(false);
   });
@@ -114,7 +110,7 @@ describe("repoSetup", () => {
     const repoPath = await createRepo({ commit: false });
     await mkdir(join(repoPath, ".halinka"));
 
-    await expect(setUpRepo({ repoPath, server: "local" })).rejects.toMatchObject({
+    await expect(setUpRepo({ repoPath })).rejects.toMatchObject({
       code: "invalid_input",
       message: `${repoPath} has .halinka/. Edit its files to change the settings`,
     });
@@ -124,16 +120,8 @@ describe("repoSetup", () => {
     const repoPath = await createRepo({ commit: false });
 
     await expect(
-      setUpRepo({ repoPath, server: "local", devcontainer: ".devcontainer/web/devcontainer.json" }),
+      setUpRepo({ repoPath, devcontainer: ".devcontainer/web/devcontainer.json" }),
     ).rejects.toMatchObject({ code: "invalid_input" });
     expect(await pathExists(join(repoPath, ".halinka"))).toBe(false);
-  });
-
-  it("refuses a server that is not local or a server URL", async () => {
-    const repoPath = await createRepo({ commit: false });
-
-    await expect(
-      setUpRepo({ repoPath, server: "http://user:secret@halinka.example" }),
-    ).rejects.toMatchObject({ code: "invalid_input" });
   });
 });

@@ -86,22 +86,6 @@ describe("POST /api/inbox/{id}/resolve", () => {
   });
 });
 
-describe("POST /api/repos/init", () => {
-  it("uses the public URL for the server of a repo setup", async () => {
-    const server = await createConnectedTestServer(testDb(), {
-      hasAuth: true,
-      isRemoteRunner: true,
-    });
-    server.setApiCookie((await logIn(server.app, testApiUrl, octo)).cookie);
-
-    await server.api.repos.init({ runnerId: server.runnerId, path: "/code/other" }).catch(() => {});
-
-    expect(server.commands.setUpRepo).toHaveBeenCalledWith(
-      expect.objectContaining({ server: testApiUrl }),
-    );
-  });
-});
-
 describe("POST /api/repos", () => {
   it("lets an Admin register a repo", async () => {
     const { adminApi, runnerId } = await setUp();

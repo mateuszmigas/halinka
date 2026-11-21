@@ -26,7 +26,7 @@ describe("controlPlane", () => {
   it("pins the protocol version to the newest resolved workflow fixture", () => {
     expect({ fixture: newestResolvedFixture(), protocolVersion }).toEqual({
       fixture: "1/1.json",
-      protocolVersion: 20,
+      protocolVersion: 21,
     });
   });
 

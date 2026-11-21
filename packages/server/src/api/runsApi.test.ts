@@ -539,9 +539,7 @@ describe("POST /api/runs", () => {
   });
 
   it("keeps the path of a devcontainer that the base commit does not have", async () => {
-    const { api } = await withConfig(
-      "schema_version: 1\nserver: local\ndevcontainer: .devcontainer/new.json\n",
-    );
+    const { api } = await withConfig("schema_version: 1\ndevcontainer: .devcontainer/new.json\n");
 
     await api.runs.create({ repoId: 1, workflow: "build" });
 
@@ -554,13 +552,11 @@ describe("POST /api/runs", () => {
   });
 
   it("refuses a config that is not valid", async () => {
-    const { api } = await withConfig(
-      "schema_version: 1\nserver: local\ndevcontainer: ../outside.json\n",
-    );
+    const { api } = await withConfig("schema_version: 1\ndevcontainer: ../outside.json\n");
 
     await expect(api.runs.create({ repoId: 1, workflow: "build" })).rejects.toMatchObject({
       status: 400,
-      message: expect.stringContaining(".halinka/config.yml is not valid: line 3"),
+      message: expect.stringContaining(".halinka/config.yml is not valid: line 2"),
     });
   });
 

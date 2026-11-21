@@ -14,7 +14,7 @@ const buildPath = ".halinka/workflows/build.yml";
 const legacyWorkflow =
   "name: Build\nenvironment: default\nsteps:\n  - id: build\n    type: shell\n    run: make\n";
 
-const legacyConfig = "server: local\nenvironments:\n  default:\n    devcontainer: dc.json\n";
+const legacyConfig = "environments:\n  default:\n    devcontainer: dc.json\n";
 
 const setUp = async (files: Record<string, string> = {}) => {
   const root = await tempFolder();
@@ -47,7 +47,7 @@ describe("migrateRepo", () => {
     await migrateRepo(root, { isWritten: true });
 
     expect(await readTextFile(join(root, configPath))).toBe(
-      "schema_version: 1\nserver: local\ndevcontainer: dc.json\n",
+      "schema_version: 1\ndevcontainer: dc.json\n",
     );
   });
 
@@ -95,13 +95,13 @@ describe("migrateRepo", () => {
 
   it("gives the problems that stay in config.yml", async () => {
     const root = await setUp({
-      [configPath]: "environments:\n  default:\n    devcontainer: dc.json\n",
+      [configPath]: "environments:\n  a: { devcontainer: a.json }\n  b: { devcontainer: b.json }\n",
     });
 
     const { problems } = await migrateRepo(root, { isWritten: false });
 
     expect(problems).toEqual([
-      ".halinka/config.yml:1:1 Add server: local, or the URL of your Halinka server",
+      ".halinka/config.yml:2:1 A repo has one devcontainer. Write devcontainer: <path> and delete environments.",
     ]);
   });
 
@@ -138,7 +138,7 @@ describe("migrateRepo", () => {
       config: await readTextFile(join(root, configPath)),
     }).toEqual({
       failedWrites: [buildPath],
-      config: "schema_version: 1\nserver: local\ndevcontainer: dc.json\n",
+      config: "schema_version: 1\ndevcontainer: dc.json\n",
     });
   });
 

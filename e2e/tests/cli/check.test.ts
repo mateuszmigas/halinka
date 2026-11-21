@@ -10,7 +10,7 @@ test.describe("halinka check", () => {
 
   test("prints the path and the line of a problem", async ({ halinka }) => {
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
       ".halinka/workflows/build.yml":
         "schema_version: 1\nname: Build\nsteps:\n  - id: Not Valid\n    type: shell\n    run: make\n",
     });

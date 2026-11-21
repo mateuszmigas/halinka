@@ -12,10 +12,10 @@ writes only the first; `start`, `server` and `runner` write only the second.
   handler with a dynamic import.
 - A secret is never a flag value, because shell history and `ps` show flags. Read it from stdin or a hidden prompt.
 - A flag overrides its environment variable. Each prompt has a flag, so scripts need no terminal (`--yes`).
-- One resolver (`serverChoice.ts`) gives the server of each command. `run`, `agent`, `status`, `open`, `ssh` and
-  `logout`: `--server`, then `HALINKA_SERVER_URL`, then `halinka use`, then the fallback of the command (the repo for
-  `run`, this machine for `agent`, `status` and `open`, none for `ssh` and `logout`). `init` takes its flag, a prompt or
-  `local`. `login` and `runner` need `--server`; `runner` also takes `ws` and `wss`. `local` is the URL in
+- One resolver (`serverChoice.ts`) gives the server of each command. `run`, `init`, `agent`, `status`, `open`, `ssh`
+  and `logout`: `--server`, then `HALINKA_SERVER_URL`, then `halinka use`, then the fallback of the command (this
+  machine, or none for `ssh` and `logout`). The repo never selects a server, so the same `.halinka/` works on each
+  server. `login` and `runner` need `--server`; `runner` also takes `ws` and `wss`. `local` is the URL in
   `$HALINKA_HOME/server.json`, or `http://127.0.0.1:7070` without that file.
 - Each command that sends something (a token, a login, a key, a path, a run) refuses `http` to a host that is not
   loopback: all commands but `open` and `use`, and `runner` only without `--insecure`.
@@ -33,8 +33,8 @@ writes only the first; `start`, `server` and `runner` write only the second.
   same files (`@halinka/runner/repoSetup`). `init` registers the repo when this machine has a runner key and the server
   answers. It prints the reason when the registration fails, but not when the next steps already say what to do:
   without a key, they say how to make the machine a runner; with `local` and a refused connection, they say
-  `halinka start`, which registers the repo. It never creates a key or starts a process. With a URL that is not loopback as the server, it warns
-  that the committed `config.yml` names that server.
+  `halinka start`, which registers the repo. It never creates a key or starts a process. It asks only for the
+  devcontainer: the files name no server.
 - `check` parses `.halinka/` with the parsers and presets of the installed CLI, and checks that the devcontainer file
   exists. It needs no server. A parser problem prints as `path:line:column message`. Any problem gives exit code 1.
 - `migrate` uses `migrateDefinition` ([workflows.md](workflows.md#files)) to change the `.halinka/` files that have no
@@ -48,7 +48,8 @@ writes only the first; `start`, `server` and `runner` write only the second.
 ## `halinka run`
 
 - Asks the server for a run of the repo and follows it. The CLI is not a runner: the runner of the repo executes the run.
-- Server fallback: `server` in `.halinka/config.yml`. A remote server that only the repo selects needs a login first.
+- Server fallback: this machine. `run` refuses a `.halinka/config.yml` that is not valid before it sends anything. A
+  missing file goes to the server: a run of a repo that the server knows does not need it.
 - This machine must be a runner of the server. `run` registers the repo when `repos.list` does not show it for this
   runner.
 - Prints the start and end of each step attempt, each gate result, command output (stderr to stderr) and agent text.
@@ -66,9 +67,11 @@ writes only the first; `start`, `server` and `runner` write only the second.
   package code, or from `apps/portal/dist` in a checkout.
 - Both take `$HALINKA_HOME/server.lock` before they open the database, and write their URL to `server.json`. A stop
   removes the file; after a crash it stays until the next start.
-- `start` inside a repo with `server: local` registers that repo. `start` prints the problems of a
+- `start` inside a repo with `.halinka/config.yml` registers that repo. `start` prints the problems of a
   `.halinka/config.yml` that is not valid, as `check` does, and does not register the repo. It also prints one line
-  when it registers no repo for another reason (no git repo, no `.halinka/config.yml`, a server URL). After it
+  when it registers no repo for another reason (no git repo, no `.halinka/config.yml`). When `halinka use` or
+  `HALINKA_SERVER_URL` selects another server, it prints one line with the remedy, so a `run` after `start` does not go
+  to that server with no word. After it
   registers the repo, it warns when the repo has no devcontainer and the runner runs in a devcontainer: the runs of
   the repo stay in the queue. Else, while the repo has no run, it prints the next steps (`firstRunSteps`): a key for
   each agent of `smoke.yml` with no team key and no key in the environment (for a devcontainer runner), then the link
@@ -121,7 +124,9 @@ Flags of `start` and `runner`:
   to the exact URL of its login. The server keeps hashes only.
 - Approve only a code that your own terminal shows: anyone can start a request, and the member who approves it makes
   that CLI act as the member. The CLI prints the member name.
-- `use <url>` selects a server that has a login for the next commands; `use repo` ends the choice.
+- `use <url>` selects a server for the next commands, also before a login, and names the login when there is none.
+  `use local` selects this machine. `use` with no server prints the selected server, its source and the logins.
+  `logout` keeps the selection, so the next command asks for a login and does not go to this machine with no word.
 - `logout` ends the token of this machine. When the server does not answer, the token stays, so the person can try
   again. The Terminals page of the portal ends any token of its member.
 - `login`, `logout` and `use` change `logins.json` under a lock, from the latest file, with no network call in the
@@ -171,11 +176,15 @@ Flags of `start` and `runner`:
 - A CLI token acts only for itself: it cannot approve a login, or list or end another token, so a leaked token cannot
   renew itself or lock out the other terminals of its member. Rejected: the device plugin of Better Auth (a second
   mechanism with its own tables); the session cookie (it ends at a sign-out of the browser).
-- The choice of a person wins over the repo, so a cloned repo cannot send a path or inputs to the server of its author.
-  `HALINKA_SERVER_URL` counts as the choice of the person.
+- The machine selects the server, never the repo: `--server`, `HALINKA_SERVER_URL`, `halinka use` (also set by
+  `login`), then this machine. One committed `.halinka/` then runs locally and on a team server, and a cloned repo
+  cannot send a path or inputs to the server of its author. `logout` keeps the selection. Rejected: `server` in
+  `config.yml` (one URL cannot serve both a local and a team setup, `start` refused a repo with a URL, and a public
+  repo named a private server); a Docker-like `halinka context` with named servers (a context holds only a URL, and
+  the token stays tied to the exact URL, so names add five commands for one string); `logout` selects this machine (a
+  `run` then goes to the local server with no word).
 - A coding agent sets up Halinka with `setup` and `check`. The agent runs as the person and can read saved tokens, so
-  "a person enters each key" is a handling rule, not a technical limit. A `github` repo uses `server: local`, so a
-  public repo does not name a private server; its files land through a pull request, and a person starts the first run
+  "a person enters each key" is a handling rule, not a technical limit. A `github` repo's files land through a pull request, and a person starts the first run
   after the merge. Setup is done only when a real run has passed. Rejected:
   - `halinka doctor`: from a laptop most of its lines say "unknown".
   - `--json` on `check`: an agent reads the plain lines, and nothing else reads them.
@@ -183,8 +192,6 @@ Flags of `start` and `runner`:
 - For a team server, `setup` tells the agent to read `version` from `GET /api/runner/manifest` and run
   `npx halinka@<version>`, because an unpinned `npx halinka` takes the latest package. Rejected: `setup --server <url>`
   that prints the pinned commands (the agent learns the server only in step 1 of the text).
-- `init --server <url>` writes the URL in `.halinka/config.yml` and warns. Rejected: the URL only in the settings of
-  the machine, as `halinka use` does (a team repo then needs each person to select the server).
 - The example `issue-to-pr.yml` tells the review to request changes only for blocking issues, in its summary, which
   the next loop pass reads. The review writes copied code and changes that are not in the issue in the output `notes`,
   and the approval message shows them to the person. The implement prompt asks for the pull request text, because the

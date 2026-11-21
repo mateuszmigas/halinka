@@ -1,7 +1,7 @@
 import { legacyWorkflow, test } from "../utils";
 
 const legacyFiles = {
-  ".halinka/config.yml": "server: local\nenvironments:\n  default:\n    sandbox: host\n",
+  ".halinka/config.yml": "environments:\n  default:\n    sandbox: host\n",
   ".halinka/workflows/build.yml": legacyWorkflow("make"),
 };
 

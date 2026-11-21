@@ -10,13 +10,15 @@ The text of `setup` is `apps/cli/src/setupInstructions.ts`; the person guide is 
 - A local server with a GitHub repo is not described. Step 1 of `setup` allows it, but steps 4 and 5 assume "local"
   means a repo on this machine and a team server means GitHub. [setup.md](../user/setup.md) says that a server on a
   local host gets an App with no webhook.
-- `init --server local` for a GitHub repo tries to register the repo at the local server. Its next step ("Start Halinka
+- `init` for a GitHub repo tries to register the repo at the selected server. Its next step ("Start Halinka
   in this repo. This registers the repo") and a warning when a local server runs and refuses do not apply to a GitHub
   repo. The owner selects an option, for example a flag `--source github` that skips the registration and prints the
   steps of a GitHub repo.
 
 ## Nice to have
 
+- `localhost` and `[::1]` count as another server than `127.0.0.1` in `chooseServer` and in the warning of `start`, so
+  `HALINKA_SERVER_URL=http://localhost:7070` gives a login step and a false warning. Compare the hosts as loopback.
 - The server tells which agents of a workflow have no key, so that the portal and run start can show it. Today only
   `firstRunSteps` of `start` knows it, and it reads the team keys and the environment of its own process.
 - One module of portal links for the CLI: `run.ts` and `firstRunSteps.ts` build `/runs/<id>`, `/agents` and

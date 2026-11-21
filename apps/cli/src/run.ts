@@ -1,8 +1,12 @@
+import { join } from "node:path";
+
 import { type ApiError, createApiClient, isUnauthorized } from "@halinka/server/client";
 import { errorMessage } from "@halinka/utils/errors";
+import { readTextFile } from "@halinka/utils/fs";
+import { parseRepoConfig, repoConfigPath } from "@halinka/workflow";
 
-import { formatApiFailure } from "./apiFailure";
-import { fail, failWithUsage, parseCommandWithPositionals } from "./args";
+import { formatApiFailure, problemLine } from "./apiFailure";
+import { fail, failWithError, failWithUsage, parseCommandWithPositionals } from "./args";
 import { findRepoRoot } from "./findRepoRoot";
 import { logInHint, readToken } from "./logins";
 import { registerRepo } from "./registerRepo";
@@ -19,7 +23,7 @@ Asks the server for a run of this repo, and follows it. Ctrl+C stops the follow;
 Options:
   --input <name=value>   An input of the workflow (repeat it)
   --repo <path>          The repo, if it is not the repo of the current folder
-  --server <local|url>   The server (default: HALINKA_SERVER_URL, then halinka use, then server in .halinka/config.yml)`;
+  --server <local|url>   The server (default: HALINKA_SERVER_URL, then halinka use, then the server of this machine)`;
 
 const readTimeoutMs = 10_000;
 
@@ -35,6 +39,15 @@ const parseInputs = (values: string[]) =>
         : failWithUsage(`--input must be name=value. Got "${value}".`, usage);
     }),
   );
+
+// A missing file can be fine: the server knows the repo, or it names the problem.
+const refuseInvalidConfig = async (root: string) => {
+  const source = await readTextFile(join(root, repoConfigPath)).catch(failWithError);
+  const config = source === undefined ? undefined : parseRepoConfig(source);
+  if (config && !config.ok) {
+    fail(`${repoConfigPath} is not valid: ${config.problems.map(problemLine).join(", ")}.`);
+  }
+};
 
 export const run = async (args: string[]) => {
   const { values: flags, positionals } = parseCommandWithPositionals(
@@ -55,8 +68,9 @@ export const run = async (args: string[]) => {
   const server = await resolveServer(flags.server, {
     usage,
     sends: "a run",
-    fallback: { repo: root },
+    fallback: "local",
   });
+  await refuseInvalidConfig(root);
   const registration = await registerRepo(server, root, { isListedFirst: true });
   if (!registration.ok)
     return fail(safeText(registration.problems.map(({ reason }) => reason).join("\n")));

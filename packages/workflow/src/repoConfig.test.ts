@@ -8,24 +8,19 @@ const messagesOf = (source: string) => {
 };
 
 describe("parseRepoConfig", () => {
-  it("reads the server and the devcontainer", () => {
+  it("reads the devcontainer", () => {
     expect(
-      parseRepoConfig(
-        "schema_version: 1\nserver: local\ndevcontainer: .devcontainer/devcontainer.json\n",
-      ),
+      parseRepoConfig("schema_version: 1\ndevcontainer: .devcontainer/devcontainer.json\n"),
     ).toEqual({
       ok: true,
-      value: {
-        server: "local",
-        devcontainer: ".devcontainer/devcontainer.json",
-      },
+      value: { devcontainer: ".devcontainer/devcontainer.json" },
     });
   });
 
   it.each(["/etc/devcontainer.json", "../other/devcontainer.json", ".devcontainer//x.json"])(
     "refuses the devcontainer path %s",
     (path) => {
-      expect(messagesOf(`schema_version: 1\nserver: local\ndevcontainer: ${path}\n`)).toEqual([
+      expect(messagesOf(`schema_version: 1\ndevcontainer: ${path}\n`)).toEqual([
         "Use a path from the repo root, such as .devcontainer/devcontainer.json",
       ]);
     },
@@ -34,7 +29,6 @@ describe("parseRepoConfig", () => {
   const withSetup = (...lines: string[]) =>
     [
       "schema_version: 1",
-      "server: local",
       "devcontainer: dc.json",
       "setup:",
       ...lines.map((line) => `  ${line}`),
@@ -50,7 +44,6 @@ describe("parseRepoConfig", () => {
     expect(parseRepoConfig(source)).toEqual({
       ok: true,
       value: {
-        server: "local",
         devcontainer: "dc.json",
         setup: { network: ["registry.npmjs.org"], run: "npm ci", secrets: ["NPM_TOKEN"] },
       },
@@ -84,24 +77,28 @@ describe("parseRepoConfig", () => {
   });
 
   it("refuses setup without a devcontainer", () => {
-    expect(messagesOf("schema_version: 1\nserver: local\nsetup:\n  run: npm ci\n")).toEqual([
+    expect(messagesOf("schema_version: 1\nsetup:\n  run: npm ci\n")).toEqual([
       "Only a devcontainer has setup. Add devcontainer.",
     ]);
   });
 
   it("refuses an unknown key", () => {
-    expect(messagesOf("schema_version: 1\nserver: local\nextra: {}\n")).toEqual(["Unknown key"]);
+    expect(messagesOf("schema_version: 1\nextra: {}\n")).toEqual(["Unknown key"]);
   });
 
   it("gives the reason of environments", () => {
-    expect(messagesOf("schema_version: 1\nserver: local\nenvironments: {}\n")).toEqual([
+    expect(messagesOf("schema_version: 1\nenvironments: {}\n")).toEqual([
       "A repo has one devcontainer. Write devcontainer: <path> and delete environments.",
     ]);
   });
 
-  it("asks for a server", () => {
-    expect(messagesOf("schema_version: 1\ndevcontainer: dc.json\n")).toEqual([
-      "Add server: local, or the URL of your Halinka server",
+  it("reads a config with only the version", () => {
+    expect(parseRepoConfig("schema_version: 1\n")).toEqual({ ok: true, value: {} });
+  });
+
+  it("gives the reason of server", () => {
+    expect(messagesOf("schema_version: 1\nserver: local\n")).toEqual([
+      "A repo does not select a server. Delete the server key.",
     ]);
   });
 });

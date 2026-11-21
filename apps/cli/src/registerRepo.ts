@@ -13,7 +13,7 @@ export type RegisterRepoOptions = {
 };
 
 export type RegisterProblem = {
-  kind: "no_runner_key" | "unreachable" | "refused";
+  kind: "no_runner_key" | "no_login" | "unreachable" | "refused";
   reason: string;
 };
 
@@ -28,7 +28,7 @@ const notRunnerHint = (server: string) =>
   `This machine is not a runner of the server. Make it a runner: halinka runner --server ${server}`;
 
 const failure = (error: unknown, server: string) => {
-  if (isUnauthorized(error)) return problem("refused", logInHint(server));
+  if (isUnauthorized(error)) return problem("no_login", logInHint(server));
   if (error instanceof ORPCError) return problem("refused", error.message);
   const isRefused = error instanceof Error && codeOf(error.cause) === "ECONNREFUSED";
   return problem(

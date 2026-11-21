@@ -35,8 +35,7 @@ import { invalidWorkflow, noRepo, ServiceError } from "./serviceError";
 
 type RunnerOf = ReturnType<typeof requireRunner>;
 
-// `origin`: the server URL that the request used
-type RepoInit = { runnerId: number; path: string; devcontainer?: string; origin: string };
+type RepoInit = { runnerId: number; path: string; devcontainer?: string };
 
 type RepoServiceOptions = {
   db: Db;
@@ -44,7 +43,6 @@ type RepoServiceOptions = {
   connectedRunners: ConnectedRunners;
   bus: RunBus;
   gitHubApp: GitHubAppService;
-  localRunnerId: () => number | undefined;
 };
 
 const noAppAccess = () =>
@@ -160,15 +158,13 @@ export class RepoService {
     return withoutNulls(added);
   }
 
-  // The local runner's repo uses `server: local`, as `halinka start` registers it.
-  async init({ runnerId, path, devcontainer, origin }: RepoInit) {
+  async init({ runnerId, path, devcontainer }: RepoInit) {
     const runner = await requireKnownRunner(
       this.options.repositories,
       this.options.connectedRunners,
       runnerId,
     );
-    const server = runnerId === this.options.localRunnerId() ? "local" : origin;
-    await runner.setUpRepo({ repoPath: path, server, devcontainer });
+    await runner.setUpRepo({ repoPath: path, devcontainer });
     return this.registerOn(runner, runnerId, path);
   }
 

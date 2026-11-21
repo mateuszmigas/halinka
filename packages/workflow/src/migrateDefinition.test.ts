@@ -227,32 +227,24 @@ describe("migrateDefinition", () => {
 
   it("moves the devcontainer of the one environment of config.yml", () => {
     const lines = [
-      "server: local",
       "environments:",
       "  default:",
       "    devcontainer: .devcontainer/devcontainer.json",
     ];
 
     expect(linesOf(lines, repoConfigPath)).toEqual(
-      versioned("server: local", "devcontainer: .devcontainer/devcontainer.json"),
+      versioned("devcontainer: .devcontainer/devcontainer.json"),
     );
   });
 
   it("deletes a host environment of config.yml", () => {
-    const lines = [
-      "server: local",
-      "environments:",
-      "  default:",
-      "    sandbox: host",
-      "    devcontainer: dc.json",
-    ];
+    const lines = ["environments:", "  default:", "    sandbox: host", "    devcontainer: dc.json"];
 
-    expect(linesOf(lines, repoConfigPath)).toEqual(versioned("server: local"));
+    expect(linesOf(lines, repoConfigPath)).toEqual(versioned());
   });
 
   it("keeps several environments of config.yml, and the parse gives the reason", () => {
     const lines = [
-      "server: local",
       "environments:",
       "  default: { devcontainer: a.json }",
       "  e2e: { devcontainer: b.json }",
@@ -263,13 +255,6 @@ describe("migrateDefinition", () => {
     ]);
   });
 
-  it("gives a config.yml without server a problem that asks for it", () => {
-    const lines = ["environments:", "  default:", "    devcontainer: dc.json"];
-
-    expect(messagesAfter(lines, repoConfigPath)).toEqual([
-      "Add server: local, or the URL of your Halinka server",
-    ]);
-  });
   it("keeps the list marker of a step whose first key moves", () => {
     const lines = withSteps(
       "  - with:",
@@ -364,13 +349,9 @@ describe("migrateDefinition", () => {
   });
 
   it("writes schema_version above the devcontainer of a config.yml that starts with environments", () => {
-    const lines = ["environments:", "  default:", "    devcontainer: dc.json", "server: local"];
+    const lines = ["environments:", "  default:", "    devcontainer: dc.json"];
 
-    expect(linesOf(lines, repoConfigPath)).toEqual([
-      "schema_version: 1",
-      "devcontainer: dc.json",
-      "server: local",
-    ]);
+    expect(linesOf(lines, repoConfigPath)).toEqual(["schema_version: 1", "devcontainer: dc.json"]);
   });
 
   it("notes that a step reaches no network unless it names the hosts", () => {

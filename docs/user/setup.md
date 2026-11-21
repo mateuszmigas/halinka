@@ -9,7 +9,6 @@ server on this machine, this guide tells you when to start it.
 | --- | --- | --- |
 | Where the repo is | A checkout on a runner | On GitHub. The server reads it through the GitHub App. |
 | Where workflows come from | The working tree of the checkout | The tip of the default branch |
-| `server` in `.halinka/config.yml` | `local`, or the URL of the team server | `local` |
 | Where a run executes | A devcontainer, or a worktree with no sandbox | A devcontainer. A run that a person starts can also use a worktree. |
 | What starts a run | A person, in the portal or with `halinka run` | A person in the portal, or GitHub: a label, a comment or a pull request |
 
@@ -29,7 +28,9 @@ The files are in `.halinka/`. Commit them with the repo. Select one of the two w
   you use, where the repo is, and if runs may use a container. Then it writes the files, tests them, and stops at each
   step that a person must do. You enter each key. The agent must not see a key.
 - **By hand.** In the repo, run `halinka init`. It writes `.halinka/config.yml`, `.halinka/workflows/smoke.yml` and,
-  with `--devcontainer create`, a devcontainer with a Node image. For a GitHub repo, use `--server local`.
+  with `--devcontainer create`, a devcontainer with a Node image. The files name no server, so they work locally and
+  on a team server. The CLI uses the server of this machine, or the server that `halinka login` or
+  `halinka use <url>` selects. `halinka use local` selects this machine again.
 
 Then change the files for your repo:
 

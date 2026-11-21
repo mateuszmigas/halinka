@@ -36,7 +36,7 @@ export const updateLogins = async (change: (logins: Logins) => Logins) => {
   }
 };
 
-// A token goes only to the URL of its login: a repo can select another server.
+// A token goes only to the URL of its login: --server or HALINKA_SERVER_URL can name another server.
 export const readToken = async (server: string) =>
   (await readLogins().catch(() => undefined))?.tokens[server]?.token;
 

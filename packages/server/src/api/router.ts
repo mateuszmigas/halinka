@@ -155,9 +155,7 @@ export const router = api.router({
     register: admin.repos.register.handler(({ input, context }) =>
       context.services.repo.register(input.runnerId, input.path),
     ),
-    init: admin.repos.init.handler(({ input, context }) =>
-      context.services.repo.init({ ...input, origin: context.origin }),
-    ),
+    init: admin.repos.init.handler(({ input, context }) => context.services.repo.init(input)),
     createGitHub: admin.repos.createGitHub.handler(({ input, context }) =>
       context.services.repo.createGitHub(input.githubRepoId),
     ),

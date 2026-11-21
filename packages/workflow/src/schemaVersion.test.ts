@@ -31,14 +31,14 @@ describe("parseVersioned", () => {
   });
 
   it("gives a parsed value without schema_version", () => {
-    expect(parseRepoConfig("schema_version: 1\nserver: local\n")).toEqual({
+    expect(parseRepoConfig("schema_version: 1\ndevcontainer: dc.json\n")).toEqual({
       ok: true,
-      value: { server: "local" },
+      value: { devcontainer: "dc.json" },
     });
   });
 
   it("names only the command line for a config.yml without schema_version", () => {
-    expect(parseRepoConfig("server: local\n")).toMatchObject({
+    expect(parseRepoConfig("devcontainer: dc.json\n")).toMatchObject({
       ok: false,
       problems: [
         {

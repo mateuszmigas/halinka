@@ -12,7 +12,6 @@ import {
   registerTestRunner,
   repoPath,
   setUpTestDb,
-  testApiUrl,
 } from "../testing";
 
 const testDb = setUpTestDb();
@@ -235,19 +234,11 @@ describe("POST /api/repos", () => {
 });
 
 describe("POST /api/repos/init", () => {
-  const notSetUp = async (options: { isRemoteRunner?: boolean } = {}) => {
-    const server = await createTestServer(testDb(), options);
+  const notSetUp = async () => {
+    const server = await createTestServer(testDb());
     delete server.files[".halinka/config.yml"];
     return server;
   };
-
-  it("writes server: local for a folder of the local runner", async () => {
-    const { api, runnerId, files } = await notSetUp();
-
-    await api.repos.init({ runnerId, path: repoPath });
-
-    expect(files[".halinka/config.yml"]).toBe("schema_version: 1\nserver: local\n");
-  });
 
   it("registers a folder of the local runner", async () => {
     const { api, runnerId } = await notSetUp();
@@ -261,16 +252,6 @@ describe("POST /api/repos/init", () => {
       path: repoPath,
       runnerId,
     });
-  });
-
-  it("writes the URL of the server for a folder of a remote runner", async () => {
-    const { api, runnerId, files } = await notSetUp({ isRemoteRunner: true });
-
-    await api.repos.init({ runnerId, path: repoPath, devcontainer: ".devcontainer.json" });
-
-    expect(files[".halinka/config.yml"]).toBe(
-      `schema_version: 1\nserver: ${testApiUrl}\ndevcontainer: .devcontainer.json\n`,
-    );
   });
 
   it("answers 400 with the reason when the runner refuses the setup", async () => {
@@ -373,7 +354,7 @@ describe("GET /api/repos/{id}/workflows", () => {
 
   it("gives the problems of config.yml", async () => {
     const { api, files } = await createConnectedTestServer(testDb());
-    files[".halinka/config.yml"] = "server: local\n";
+    files[".halinka/config.yml"] = "devcontainer: dc.json\n";
 
     expect((await api.repos.workflows({ id: 1 })).configProblems).toEqual([
       expect.objectContaining({ path: ["schema_version"] }),

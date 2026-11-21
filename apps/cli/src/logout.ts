@@ -28,8 +28,7 @@ export const logout = async (args: string[]) => {
     const { [server]: saved, ...tokens } = logins.tokens;
     // A login of another command after the read keeps its new token.
     if (saved?.token !== token) return logins;
-    const { current, ...rest } = logins;
-    return { ...rest, ...(current !== server && { current }), tokens };
+    return { ...logins, tokens };
   }).catch(failWithError);
   console.log(`Logged out of ${server}.`);
 };

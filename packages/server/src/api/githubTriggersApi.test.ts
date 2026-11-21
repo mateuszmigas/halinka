@@ -329,7 +329,6 @@ describe("POST /api/github/webhook", () => {
   it("skips a setup with secrets for a pull request, with no secret stored", async () => {
     const config = [
       "schema_version: 1",
-      "server: local",
       "devcontainer: .devcontainer/devcontainer.json",
       "setup:",
       "  run: pnpm install",
@@ -349,7 +348,6 @@ describe("POST /api/github/webhook", () => {
   it("skips a setup with secrets when the head is also the tip", async () => {
     const config = [
       "schema_version: 1",
-      "server: local",
       "devcontainer: .devcontainer/devcontainer.json",
       "setup:",
       "  run: pnpm install",

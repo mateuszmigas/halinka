@@ -106,9 +106,7 @@ shadcn on Base UI (`@halinka/ui`).
   `.halinka/config.yml`, and Home names each repo with a config or workflow that is not valid.
 - `repos.register` refuses a folder without `.halinka/config.yml` with `REPO_NOT_SET_UP` and its devcontainers. The
   portal then shows "Init and register": `repos.init` makes the runner write the files of `halinka init`, then registers
-  the folder. A local runner gets `server: local`. A remote runner gets `HALINKA_PUBLIC_URL` on a server with a login,
-  and the origin of the request otherwise. The panel says before the write that a remote runner's file names the URL,
-  because the portal does not know which runner is local.
+  the folder. The files are the same for each runner: they name no server.
 
 ## Workflow editor
 

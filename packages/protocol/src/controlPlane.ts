@@ -211,7 +211,7 @@ const sshHostKeyPattern = /^ssh-ed25519 [A-Za-z0-9+/]+={0,2}$/;
 export const isSshHostKey = (value: string) => sshHostKeyPattern.test(value);
 
 // Change it when a runner and a server of different versions cannot work together.
-export const protocolVersion = 20;
+export const protocolVersion = 21;
 
 export const unsupportedVersionReason = (version: number) =>
   `The server uses protocol version ${protocolVersion}, not ${version}`;

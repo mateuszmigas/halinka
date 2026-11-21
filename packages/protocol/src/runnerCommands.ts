@@ -76,8 +76,6 @@ export type FolderListing = {
 
 export type RepoSetupWrite = {
   repoPath: string;
-  // `local` or the URL of the server
-  server: string;
   // one of `listDevcontainers`, `newDevcontainerPath` to create it, or undefined for none
   devcontainer?: string;
 };

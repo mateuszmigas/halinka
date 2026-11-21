@@ -157,12 +157,12 @@ process.stdout.write(String(loaded.length));`;
     );
 
     await cli.expectExit(0);
-    await repo.expectFile(".halinka/config.yml", "schema_version: 1\nserver: local\n");
+    await repo.expectFile(".halinka/config.yml", "schema_version: 1\n");
   });
 
   test("runs a workflow on a server that serves the API and the portal", async () => {
     const repo = await TestRepo.create(join(root, "run-repo"), {
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
       ".halinka/workflows/hello.yml":
         "schema_version: 1\nname: Hello\nsteps:\n  - { id: hello, type: shell, run: echo hello }\n",
     });

@@ -46,15 +46,23 @@ test.describe("halinka start", () => {
     await server.expectOutput(`${repo.path} has no .halinka/config.yml. start registers no repo.`);
   });
 
-  test("says that it registers no repo of another server", async ({ halinka }) => {
-    const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: https://halinka.example.com\n",
-    });
+  test("warns that the other commands use another server", async ({ halinka }) => {
+    await halinka.run(["use", "https://halinka.example.com"]).expectExit(0);
 
-    const server = await halinka.start([], repo.path);
+    const server = await halinka.start();
 
     await server.expectOutput(
-      "names the server https://halinka.example.com. start registers no repo.",
+      "halinka use selects https://halinka.example.com for the next commands. To use the server of this machine: halinka use local",
+    );
+  });
+
+  test("warns that HALINKA_SERVER_URL selects another server", async ({ halinka }) => {
+    halinka.setServerUrl("https://halinka.example.com");
+
+    const server = await halinka.start();
+
+    await server.expectOutput(
+      "HALINKA_SERVER_URL selects https://halinka.example.com for the next commands. To use the server of this machine: unset HALINKA_SERVER_URL",
     );
   });
 
@@ -62,7 +70,7 @@ test.describe("halinka start", () => {
     halinka,
   }) => {
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
     });
 
     const server = await halinka.start(["--runs-in", "devcontainer"], repo.path);
@@ -76,7 +84,7 @@ test.describe("halinka start", () => {
     halinka,
   }) => {
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
     });
 
     const server = await halinka.start(["--runs-in", "devcontainer"], repo.path);
@@ -88,7 +96,7 @@ test.describe("halinka start", () => {
     halinka,
   }) => {
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
     });
     const server = await halinka.start([], repo.path);
     await server.expectRepoRegistered(repo.path);
@@ -229,7 +237,7 @@ test.describe("halinka start", () => {
 
   test("queues a run in the repo that it starts in", async ({ halinka }) => {
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
       ".halinka/workflows/build.yml": shellWorkflow("ls"),
     });
     const server = await halinka.start([], repo.path);
@@ -300,7 +308,7 @@ test.describe("halinka start", () => {
 
   test("continues a run that waits for an approval when a person approves", async ({ halinka }) => {
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
       ".halinka/workflows/ship.yml": [
         "schema_version: 1",
         "name: Ship",
@@ -329,7 +337,7 @@ test.describe("halinka start", () => {
     await halinka.installFakeAgent("claude-code");
     const prompt = fakeAgentPrompt([[{ report: { summary: "Done" } }]]);
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
       ".halinka/workflows/agent.yml": [
         "schema_version: 1",
         "name: Agent",
@@ -351,7 +359,7 @@ test.describe("halinka start", () => {
 
   test("runs a workflow on the branch that its inputs name", async ({ halinka }) => {
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
       ".halinka/workflows/fix.yml": [
         "schema_version: 1",
         "name: Fix",
@@ -383,7 +391,7 @@ test.describe("halinka start", () => {
       ],
     ]);
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
       ".halinka/workflows/agent.yml": [
         "schema_version: 1",
         "name: Agent",
@@ -403,7 +411,7 @@ test.describe("halinka start", () => {
 
   test("removes the workspace of a finished run when a person asks", async ({ halinka }) => {
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
       ".halinka/workflows/build.yml": shellWorkflow("ls"),
     });
     const server = await halinka.start([], repo.path);

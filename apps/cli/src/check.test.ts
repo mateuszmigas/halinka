@@ -18,7 +18,7 @@ const shellWorkflow =
 describe("checkRepo", () => {
   it("accepts a valid config with a workflow", async () => {
     const root = await tempFolder();
-    await write(root, ".halinka/config.yml", "schema_version: 1\nserver: local\n");
+    await write(root, ".halinka/config.yml", "schema_version: 1\n");
     await write(root, ".halinka/workflows/build.yml", shellWorkflow);
 
     expect(await checkRepo(root)).toEqual({ workflows: 1, problems: [] });
@@ -26,7 +26,7 @@ describe("checkRepo", () => {
 
   it("gives the line of a problem in a workflow", async () => {
     const root = await tempFolder();
-    await write(root, ".halinka/config.yml", "schema_version: 1\nserver: local\n");
+    await write(root, ".halinka/config.yml", "schema_version: 1\n");
     await write(
       root,
       ".halinka/workflows/build.yml",
@@ -40,7 +40,7 @@ describe("checkRepo", () => {
 
   it("refuses an agent that no preset has", async () => {
     const root = await tempFolder();
-    await write(root, ".halinka/config.yml", "schema_version: 1\nserver: local\n");
+    await write(root, ".halinka/config.yml", "schema_version: 1\n");
     await write(
       root,
       ".halinka/workflows/fix.yml",
@@ -66,7 +66,7 @@ describe("checkRepo", () => {
     await write(
       root,
       ".halinka/config.yml",
-      "schema_version: 1\nserver: local\ndevcontainer: .devcontainer.json\n",
+      "schema_version: 1\ndevcontainer: .devcontainer.json\n",
     );
     await write(root, ".halinka/workflows/build.yml", shellWorkflow);
 
@@ -79,7 +79,7 @@ describe("checkRepo", () => {
 
   it("refuses a repo with no workflow", async () => {
     const root = await tempFolder();
-    await write(root, ".halinka/config.yml", "schema_version: 1\nserver: local\n");
+    await write(root, ".halinka/config.yml", "schema_version: 1\n");
 
     const { problems } = await checkRepo(root);
 
@@ -91,7 +91,7 @@ describe("checkRepo", () => {
     await write(
       root,
       ".halinka/config.yml",
-      "schema_version: 1\nserver: local\ndevcontainer: .devcontainer.json\n",
+      "schema_version: 1\ndevcontainer: .devcontainer.json\n",
     );
     await write(root, ".devcontainer.json", "{}\n");
     await write(root, ".halinka/workflows/build.yml", shellWorkflow);
@@ -101,25 +101,17 @@ describe("checkRepo", () => {
 
   it("gives the line of a problem in the config", async () => {
     const root = await tempFolder();
-    await write(
-      root,
-      ".halinka/config.yml",
-      "schema_version: 1\nserver: local\nsetup:\n  run: make\n",
-    );
+    await write(root, ".halinka/config.yml", "schema_version: 1\nsetup:\n  run: make\n");
     await write(root, ".halinka/workflows/build.yml", shellWorkflow);
 
     const { problems } = await checkRepo(root);
 
-    expect(problems).toEqual([expect.stringMatching(/^\.halinka\/config\.yml:3:/)]);
+    expect(problems).toEqual([expect.stringMatching(/^\.halinka\/config\.yml:2:/)]);
   });
 
   it("reports the problems of the config and of a workflow together", async () => {
     const root = await tempFolder();
-    await write(
-      root,
-      ".halinka/config.yml",
-      "schema_version: 1\nserver: local\nsetup:\n  run: make\n",
-    );
+    await write(root, ".halinka/config.yml", "schema_version: 1\nsetup:\n  run: make\n");
     await write(
       root,
       ".halinka/workflows/build.yml",
@@ -133,7 +125,7 @@ describe("checkRepo", () => {
 
   it("ignores a folder with the name of a workflow", async () => {
     const root = await tempFolder();
-    await write(root, ".halinka/config.yml", "schema_version: 1\nserver: local\n");
+    await write(root, ".halinka/config.yml", "schema_version: 1\n");
     await write(root, ".halinka/workflows/build.yml", shellWorkflow);
     await write(root, ".halinka/workflows/archive.yml/old.txt", "Old\n");
 
@@ -142,7 +134,7 @@ describe("checkRepo", () => {
 
   it("ignores a file in the workflows folder that is not a workflow", async () => {
     const root = await tempFolder();
-    await write(root, ".halinka/config.yml", "schema_version: 1\nserver: local\n");
+    await write(root, ".halinka/config.yml", "schema_version: 1\n");
     await write(root, ".halinka/workflows/readme.md", "Not a workflow\n");
 
     const { problems } = await checkRepo(root);

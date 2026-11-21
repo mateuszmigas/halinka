@@ -123,10 +123,7 @@ test.describe("halinka run", () => {
   });
 
   test("registers a repo that the server does not know", async ({ halinka }) => {
-    const { server, repo } = await startWithRepoConfig(
-      halinka,
-      "schema_version: 1\nserver: local\n",
-    );
+    const { server, repo } = await startWithRepoConfig(halinka, "schema_version: 1\n");
 
     await halinka.run(["run", "build"], repo.path).expectExit(0);
 
@@ -137,10 +134,7 @@ test.describe("halinka run", () => {
   test("uses one repo for a path through a symlink and the path of the checkout", async ({
     halinka,
   }) => {
-    const { server, repo } = await startWithRepoConfig(
-      halinka,
-      "schema_version: 1\nserver: local\n",
-    );
+    const { server, repo } = await startWithRepoConfig(halinka, "schema_version: 1\n");
     const link = join(dirname(repo.path), "link");
     await symlink(repo.path, link);
     await server.postJson("/api/repos", { runnerId: 1, path: link });
@@ -190,7 +184,7 @@ test.describe("halinka run", () => {
     const key = await readFile(join(halinka.home, "runner.json"), "utf8");
     const { publicKey } = JSON.parse(key) as { publicKey: string };
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
     });
     const creating = Promise.withResolvers<void>();
     const url = await halinka.startFakeServer((request, response) => {
@@ -226,21 +220,24 @@ test.describe("halinka run", () => {
   });
 
   test("refuses a repo without .halinka/config.yml", async ({ halinka }) => {
+    const server = await halinka.start();
+    await server.expectRunnerConnected();
     const repo = await halinka.createRepo();
 
     const cli = await halinka.run(["run", "build"], repo.path).expectExit(1);
 
-    await cli.expectOutput("has no .halinka/config.yml. Run halinka init.");
+    await cli.expectOutput(`${repo.path} has no .halinka/config.yml`);
+    await server.stop();
   });
 
   test("names the problems of a repo config that is not valid", async ({ halinka }) => {
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\nunknown: 1\n",
+      ".halinka/config.yml": "schema_version: 1\nunknown: 1\n",
     });
 
     const cli = await halinka.run(["run", "build"], repo.path).expectExit(1);
 
-    await cli.expectOutput(".halinka/config.yml is not valid: line 3: Unknown key");
+    await cli.expectOutput(".halinka/config.yml is not valid: line 2: Unknown key");
   });
 
   test("refuses a server that is not local or a URL", async ({ halinka }) => {
@@ -251,11 +248,8 @@ test.describe("halinka run", () => {
     await cli.expectOutput('The server must be "local" or an http or https URL');
   });
 
-  test("takes --server over HALINKA_SERVER_URL and the repo config", async ({ halinka }) => {
-    const { server, repo } = await startWithRepoConfig(
-      halinka,
-      "schema_version: 1\nserver: http://127.0.0.1:1\n",
-    );
+  test("takes --server over HALINKA_SERVER_URL", async ({ halinka }) => {
+    const { server, repo } = await startWithRepoConfig(halinka, "schema_version: 1\n");
     halinka.setServerUrl("http://127.0.0.1:2");
 
     await halinka.run(["run", "build", "--server", server.url], repo.path).expectExit(0);
@@ -263,11 +257,9 @@ test.describe("halinka run", () => {
     await server.stop();
   });
 
-  test("takes HALINKA_SERVER_URL over the repo config", async ({ halinka }) => {
-    const { server, repo } = await startWithRepoConfig(
-      halinka,
-      "schema_version: 1\nserver: http://127.0.0.1:1\n",
-    );
+  test("takes HALINKA_SERVER_URL over halinka use", async ({ halinka }) => {
+    const { server, repo } = await startWithRepoConfig(halinka, "schema_version: 1\n");
+    await halinka.run(["use", "http://127.0.0.1:1"]).expectExit(0);
     halinka.setServerUrl(server.url);
 
     await halinka.run(["run", "build"], repo.path).expectExit(0);
@@ -278,7 +270,7 @@ test.describe("halinka run", () => {
   test("gives a hint when this machine is not a runner of the server", async ({ halinka }) => {
     const server = await halinka.startServer();
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
     });
 
     const cli = await halinka.run(["run", "build"], repo.path).expectExit(1);
@@ -289,9 +281,8 @@ test.describe("halinka run", () => {
 
   test("says that no server answers", async ({ halinka }) => {
     await (await halinka.start()).stop();
-    const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: http://127.0.0.1:1\n",
-    });
+    const repo = await halinka.createRepo({ ".halinka/config.yml": "schema_version: 1\n" });
+    halinka.setServerUrl("http://127.0.0.1:1");
 
     const cli = await halinka.run(["run", "build"], repo.path).expectExit(1);
 
@@ -300,7 +291,7 @@ test.describe("halinka run", () => {
 
   test("names a damaged server.json without a stack trace", async ({ halinka }) => {
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
     });
     await mkdir(halinka.home, { recursive: true });
     const urlFile = join(halinka.home, "server.json");

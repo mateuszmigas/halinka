@@ -1,30 +1,29 @@
 import { join, relative, resolve } from "node:path";
 
-import { cancel, intro, isCancel, log, note, outro, select, text } from "@clack/prompts";
+import { cancel, intro, isCancel, log, note, outro, select } from "@clack/prompts";
 import { agentPresets } from "@halinka/presets";
 import { findDevcontainers, setUpRepo } from "@halinka/runner/repoSetup";
 import { errorMessage } from "@halinka/utils/errors";
 import { pathExists } from "@halinka/utils/fs";
-import { isServerUrl, serverUrlHint } from "@halinka/utils/serverUrl";
 import { newDevcontainerPath, smokeAgent } from "@halinka/workflow";
 
 import { fail as exit, failWithUsage, parseCommandArgs } from "./args";
 import { findRepoRoot } from "./findRepoRoot";
+import { logInHint, readToken } from "./logins";
 import { registerRepo } from "./registerRepo";
-import { isLoopback, parseServer, type ServerOptions } from "./serverChoice";
+import { chooseServer } from "./serverChoice";
 
 const usage = `Usage: halinka init [options]
 
 Options:
-  --server <local|url>               The server that this repo uses
+  --server <local|url>               The server that registers the repo (default: HALINKA_SERVER_URL,
+                                     then halinka use, then the server of this machine)
   --devcontainer <path|create|none>  The devcontainer that workflows use
   --yes                              Use the default for each value that you do not give`;
 
 const smokeVariables = agentPresets[smokeAgent].credentials
   .map(({ variable }) => variable)
   .join("|");
-
-const serverOptions: ServerOptions = { usage, sends: "the path of the repo" };
 
 type ResolveDevcontainerOptions = { isInteractive: boolean };
 
@@ -51,27 +50,6 @@ const parseDevcontainerFlag = (value: string | undefined, found: string[], root:
     found.find((item) => item === path) ??
     fail(`No devcontainer at ${value}. Found: ${found.join(", ") || "none"}.`)
   );
-};
-
-const chooseServer = async () => {
-  const choice = answer(
-    await select({
-      message: "Which Halinka server will you use?",
-      options: [
-        { value: "local", label: "local", hint: "halinka start on this machine" },
-        { value: "remote", label: "remote", hint: "a team server at a URL" },
-      ],
-    }),
-  );
-  if (choice === "local") return choice;
-  const url = answer(
-    await text({
-      message: "What is the URL of the server?",
-      placeholder: "https://halinka.example.com",
-      validate: (value) => (isServerUrl(value ?? "") ? undefined : `Enter ${serverUrlHint}.`),
-    }),
-  );
-  return url;
 };
 
 const chooseDevcontainer = async (found: string[]) => {
@@ -126,49 +104,45 @@ export const init = async (args: string[]) => {
   if (isInitialized)
     exit("This repo already has .halinka/. Edit its files to change the settings.");
   const flagDevcontainer = parseDevcontainerFlag(flags.devcontainer, found, root);
-
-  const missing = [
-    !flags.server && "--server",
-    !flagDevcontainer && found.length !== 1 && "--devcontainer",
-  ].filter(Boolean);
-  if (isInteractive && !process.stdin.isTTY && missing.length > 0) {
-    fail(`The input is not a terminal. Give ${missing.join(", ")}, or --yes.`);
+  const isDevcontainerAsked = !flagDevcontainer && found.length !== 1;
+  if (isInteractive && !process.stdin.isTTY && isDevcontainerAsked) {
+    fail("The input is not a terminal. Give --devcontainer, or --yes.");
   }
+  const { url: server, isLocal } = await chooseServer(flags.server, {
+    usage,
+    sends: "the path of the repo",
+  });
 
   intro("halinka init");
-  const choice = flags.server ?? (isInteractive ? await chooseServer() : "local");
-  const serverUrl = await parseServer(choice, serverOptions);
-  const server = choice === "local" ? choice : serverUrl;
   const devcontainer = await resolveDevcontainer(flagDevcontainer, found, { isInteractive });
 
-  const { files } = await setUpRepo({ repoPath: root, server, devcontainer }).catch(
-    (error: unknown) => exit(errorMessage(error)),
+  const { files } = await setUpRepo({ repoPath: root, devcontainer }).catch((error: unknown) =>
+    exit(errorMessage(error)),
   );
   for (const path of files) log.success(`Wrote ${path}`);
-  if (server !== "local" && !isLoopback(new URL(server).hostname)) {
-    log.warn(
-      `.halinka/config.yml names ${server}. Each person who can read the repo can see this URL. To keep it private, write server: local. Then log in, and run halinka use ${server}.`,
-    );
-  }
 
-  const registration = await registerRepo(serverUrl, root);
-  if (registration.ok) log.success(`Registered the repo on ${server}`);
-  else {
-    const [problem] = registration.problems;
-    const isCoveredByNextSteps =
-      problem?.kind === "no_runner_key" || (server === "local" && problem?.kind === "unreachable");
-    if (problem && !isCoveredByNextSteps)
-      log.warn(`${server} did not register the repo: ${problem.reason}`);
+  const name = isLocal ? "local" : server;
+  const registration = await registerRepo(server, root);
+  const [problem] = registration.ok ? [] : registration.problems;
+  if (registration.ok) log.success(`Registered the repo on ${name}`);
+  const isCoveredByNextSteps =
+    problem?.kind === "no_runner_key" ||
+    problem?.kind === "no_login" ||
+    (isLocal && problem?.kind === "unreachable");
+  if (problem && !isCoveredByNextSteps) {
+    log.warn(`${name} did not register the repo: ${problem.reason}`);
   }
 
   const runsIn = devcontainer ? "" : " --runs-in worktree";
   const steps: string[] = [];
-  if (server !== "local") steps.push(`Log in: halinka login --server ${server}`);
+  const needsLogin =
+    problem !== undefined && (problem.kind === "no_login" || !(await readToken(server)));
+  if (!isLocal && needsLogin) steps.push(logInHint(server));
   if (!registration.ok) {
     steps.push(
-      server === "local"
+      isLocal
         ? `Start Halinka in this repo. This registers the repo: halinka start${runsIn}. If Halinka runs in another folder, halinka run smoke in this repo registers it`
-        : `For a repo that the server reads from GitHub: commit these files, and merge them to the default branch. For a local repo: make this machine a runner, and ask an Admin to approve it: halinka runner --server ${server}${runsIn}. Then halinka run registers the repo`,
+        : `For a repo that the server reads from GitHub: commit these files, and merge them to the default branch. For a local repo: make this machine a runner, and ask an Admin to approve it: halinka runner --server ${server}${runsIn}. Then halinka run smoke --server ${server} registers the repo`,
     );
   }
   if (devcontainer) {

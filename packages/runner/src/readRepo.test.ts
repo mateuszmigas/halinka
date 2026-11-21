@@ -24,10 +24,10 @@ const setUp = async () => {
 describe("readRepo", () => {
   it("reads every file under .halinka/, also in subfolders", async () => {
     const { writeDefinition, readFiles } = await setUp();
-    await writeDefinition(".halinka/config.yml", "schema_version: 1\nserver: local\n");
+    await writeDefinition(".halinka/config.yml", "schema_version: 1\n");
 
     expect(await readFiles()).toEqual({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
       ".halinka/workflows/build.yml": "schema_version: 1\nname: Build\n",
     });
   });

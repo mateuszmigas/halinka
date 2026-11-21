@@ -6,6 +6,7 @@ import { loadOrCreateRunnerKey, runnerKeyPath } from "@halinka/runner/runnerKey"
 import { hostGit } from "@halinka/sandbox/host";
 import { readTextFile } from "@halinka/utils/fs";
 import { halinkaHome } from "@halinka/utils/halinkaHome";
+import { normalizeUrl } from "@halinka/utils/serverUrl";
 import { parseRepoConfig, repoConfigPath } from "@halinka/workflow";
 
 import { parseCommandArgs, portFlag, parsePort, parseRunnerFlags, runnerFlags } from "./args";
@@ -15,6 +16,7 @@ import { LocalServer } from "./localServer";
 import { registerRepo } from "./registerRepo";
 import { startRunner, warnOfWorktree } from "./runnerStart";
 import { safeText } from "./safeText";
+import { readSelection } from "./serverChoice";
 import { stopOnSignals } from "./signals";
 
 const usage = `Usage: halinka start [options]
@@ -54,10 +56,19 @@ const findLocalRepo = async () => {
     );
     return undefined;
   }
-  if (config.value.server !== "local") {
-    return noRepo(`${repoConfigPath} names the server ${config.value.server}.`);
-  }
   return { root, config: config.value };
+};
+
+const warnOfOtherServer = async (url: string) => {
+  const selection = await readSelection(undefined).catch(() => undefined);
+  if (!selection || selection.value === "local" || normalizeUrl(selection.value) === url) return;
+  const remedy =
+    selection.source === "halinka use" ? "halinka use local" : "unset HALINKA_SERVER_URL";
+  console.warn(
+    safeText(
+      `${selection.source} selects ${selection.value} for the next commands. To use the server of this machine: ${remedy}`,
+    ),
+  );
 };
 
 export const start = async (args: string[]) => {
@@ -94,6 +105,7 @@ export const start = async (args: string[]) => {
     `runner connected, runs in ${runnerOptions.sandboxKind}, server id ${runner.serverId}`,
   );
   warnOfWorktree(runnerOptions.sandboxKind);
+  await warnOfOtherServer(server.url);
   void runner.closed.then((refusal) => {
     if (refusal) console.error(`The server ended the connection of the runner: ${refusal.message}`);
   });

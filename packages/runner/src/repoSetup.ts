@@ -4,7 +4,6 @@ import { dirname, join } from "node:path";
 import { invalidDefinitions, invalidInput, type RunnerCommands } from "@halinka/protocol";
 import { errnoCode, errorMessage } from "@halinka/utils/errors";
 import { ensureFolder, findRealPath, isFile, isInsideFolder } from "@halinka/utils/fs";
-import { isServerUrl } from "@halinka/utils/serverUrl";
 import {
   createDevcontainer,
   createRepoConfig,
@@ -33,11 +32,8 @@ export const findDevcontainers = async (root: string) => {
   return candidates.filter((_, index) => found[index]);
 };
 
-const scaffoldFiles = (server: string, devcontainer: string | undefined, found: string[]) => [
-  {
-    path: repoConfigPath,
-    content: createRepoConfig({ server, devcontainer }),
-  },
+const scaffoldFiles = (devcontainer: string | undefined, found: string[]) => [
+  { path: repoConfigPath, content: createRepoConfig({ devcontainer }) },
   ...(devcontainer && !found.includes(devcontainer)
     ? [{ path: devcontainer, content: createDevcontainer() }]
     : []),
@@ -89,22 +85,15 @@ export const listDevcontainers: RunnerCommands["listDevcontainers"] = async ({ r
   return findDevcontainers(repoPath);
 };
 
-export const setUpRepo: RunnerCommands["setUpRepo"] = async ({
-  repoPath,
-  server,
-  devcontainer,
-}) => {
+export const setUpRepo: RunnerCommands["setUpRepo"] = async ({ repoPath, devcontainer }) => {
   await openRepoRoot(repoPath);
-  if (server !== "local" && !isServerUrl(server)) {
-    throw invalidInput(`"${server}" is not "local" or a server URL`);
-  }
   const found = await findDevcontainers(repoPath);
   if (devcontainer && devcontainer !== newDevcontainerPath && !found.includes(devcontainer)) {
     throw invalidInput(`${repoPath} has no devcontainer at ${devcontainer}`);
   }
   if (devcontainer && !found.includes(devcontainer))
     await requireInsideRepo(repoPath, devcontainer);
-  const files = scaffoldFiles(server, devcontainer, found);
+  const files = scaffoldFiles(devcontainer, found);
   await claimDefinitionsFolder(repoPath);
   await writeRepoFiles(repoPath, files);
   return { files: files.map(({ path }) => path) };

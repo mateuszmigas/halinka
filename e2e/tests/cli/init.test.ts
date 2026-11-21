@@ -8,42 +8,28 @@ test.describe("halinka init", () => {
     await halinka.init(repo, ["--yes"]).expectExit(0);
     await repo.expectFile(
       ".halinka/config.yml",
-      `schema_version: 1\nserver: local\ndevcontainer: ${devcontainerPath}\n`,
+      `schema_version: 1\ndevcontainer: ${devcontainerPath}\n`,
     );
     await repo.expectFile(devcontainerPath);
     await repo.expectFile(".halinka/workflows/smoke.yml");
   });
 
-  test("uses a remote server without a devcontainer", async ({ halinka }) => {
+  test("writes no server in the config for a remote server", async ({ halinka }) => {
     const repo = await halinka.createRepo();
     await halinka
       .init(repo, ["--server", "https://halinka.example.com/", "--devcontainer", "none"])
       .expectExit(0);
-    await repo.expectFile(
-      ".halinka/config.yml",
-      "schema_version: 1\nserver: https://halinka.example.com\n",
-    );
+    await repo.expectFile(".halinka/config.yml", "schema_version: 1\n");
     await repo.expectNoFile(devcontainerPath);
   });
 
-  test("warns that the committed config names a remote server", async ({ halinka }) => {
+  test("names the login of a remote server in the next steps", async ({ halinka }) => {
     const repo = await halinka.createRepo();
+    await halinka.run(["use", "https://halinka.example.com"]).expectExit(0);
 
-    const cli = await halinka
-      .init(repo, ["--server", "https://halinka.example.com/", "--devcontainer", "none"])
-      .expectExit(0);
+    const cli = await halinka.init(repo, ["--devcontainer", "none"]).expectExit(0);
 
-    await cli.expectOutput(".halinka/config.yml names https://halinka.example.com");
-  });
-
-  test("does not warn of the server in the config for a loopback server", async ({ halinka }) => {
-    const repo = await halinka.createRepo();
-
-    const cli = await halinka
-      .init(repo, ["--server", "http://127.0.0.1:7070", "--devcontainer", "none"])
-      .expectExit(0);
-
-    await cli.expectNoOutputAtClose(".halinka/config.yml names");
+    await cli.expectOutput("Log in first: halinka login --server https://halinka.example.com");
   });
 
   test("says nothing of the registration on a machine without a runner key", async ({
@@ -67,16 +53,29 @@ test.describe("halinka init", () => {
     await cli.expectNoOutputAtClose("did not register the repo");
   });
 
-  test("warns when a server given as a URL does not answer", async ({ halinka }) => {
+  test("names no login for the URL of the server of this machine", async ({ halinka }) => {
     const server = await halinka.start();
     await server.crash();
+    halinka.setServerUrl(server.url);
+    const repo = await halinka.createRepo();
+
+    const cli = await halinka.init(repo, ["--devcontainer", "none"]).expectExit(0);
+
+    await cli.expectNoOutputAtClose("halinka login");
+  });
+
+  test("warns when another server does not answer", async ({ halinka }) => {
+    const other = await halinka.start();
+    await other.crash();
+    const server = await halinka.start();
     const repo = await halinka.createRepo();
 
     const cli = await halinka
-      .init(repo, ["--server", server.url, "--devcontainer", "none"])
+      .init(repo, ["--server", other.url, "--devcontainer", "none"])
       .expectExit(0);
 
     await cli.expectOutput("did not register the repo");
+    await server.stop();
   });
 
   test("names the key command of the smoke agent", async ({ halinka }) => {
@@ -106,7 +105,7 @@ test.describe("halinka init", () => {
     await cli.expectOutput(`Uses ${devcontainerPath}`);
     await repo.expectFile(
       ".halinka/config.yml",
-      `schema_version: 1\nserver: local\ndevcontainer: ${devcontainerPath}\n`,
+      `schema_version: 1\ndevcontainer: ${devcontainerPath}\n`,
     );
     await repo.expectFile(devcontainerPath, "{}\n");
   });
@@ -155,7 +154,7 @@ test.describe("halinka init", () => {
 
   test("refuses a repo that has .halinka/", async ({ halinka }) => {
     const repo = await halinka.createRepo({
-      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+      ".halinka/config.yml": "schema_version: 1\n",
     });
     const cli = await halinka.init(repo, ["--yes"]).expectExit(1);
     await cli.expectOutput("This repo already has .halinka/.");
@@ -164,7 +163,7 @@ test.describe("halinka init", () => {
   test("asks for flags when the input is not a terminal", async ({ halinka }) => {
     const repo = await halinka.createRepo();
     const cli = await halinka.init(repo).expectExit(1);
-    await cli.expectOutput("The input is not a terminal. Give --server, --devcontainer, or --yes.");
+    await cli.expectOutput("The input is not a terminal. Give --devcontainer, or --yes.");
     await repo.expectNoFile(".halinka");
   });
 });

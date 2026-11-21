@@ -25,7 +25,7 @@ import {
   worktreeRunner,
 } from "./testing";
 
-const config = "schema_version: 1\nserver: local\n";
+const config = "schema_version: 1\n";
 
 const inProcessRunnerId = 1;
 

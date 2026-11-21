@@ -7,16 +7,7 @@ import { parseVersioned } from "./schemaVersion";
 export const definitionsFolder = ".halinka";
 export const repoConfigPath = `${definitionsFolder}/config.yml`;
 
-const isNotEmpty = (value: string) => value.trim() !== "";
-
-const notEmptySchema = z.string().refine(isNotEmpty, "Must not be empty");
-
-const serverSchema = z
-  .string({
-    error: ({ input }) =>
-      input === undefined ? "Add server: local, or the URL of your Halinka server" : undefined,
-  })
-  .refine(isNotEmpty, "Must not be empty");
+const notEmptySchema = z.string().refine((value) => value.trim() !== "", "Must not be empty");
 
 export const secretNameSchema = z
   .string()
@@ -39,8 +30,6 @@ const setupSchema = z
 
 const repoConfigSchema = z
   .strictObject({
-    // `local` or the URL of the server
-    server: serverSchema,
     devcontainer: z
       .string()
       .refine(
@@ -58,6 +47,7 @@ const repoConfigSchema = z
 export type RepoConfig = z.infer<typeof repoConfigSchema>;
 
 const removedKeys = new Map([
+  ["server", "A repo does not select a server. Delete the server key."],
   [
     "environments",
     "A repo has one devcontainer. Write devcontainer: <path> and delete environments.",

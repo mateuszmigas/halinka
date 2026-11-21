@@ -6,7 +6,7 @@ import { parseWorkflow } from "./workflow";
 
 describe("repoScaffold", () => {
   it("writes a config that the config schema accepts", () => {
-    const config = { server: "https://halinka.example.com", devcontainer: ".devcontainer.json" };
+    const config = { devcontainer: ".devcontainer.json" };
 
     expect(parseRepoConfig(createRepoConfig(config))).toEqual({
       ok: true,
@@ -15,10 +15,7 @@ describe("repoScaffold", () => {
   });
 
   it("writes no devcontainer key without a devcontainer", () => {
-    expect(parseRepoConfig(createRepoConfig({ server: "local" }))).toEqual({
-      ok: true,
-      value: { server: "local" },
-    });
+    expect(createRepoConfig({})).toBe("schema_version: 1\n");
   });
 
   it("writes a devcontainer with an image", () => {

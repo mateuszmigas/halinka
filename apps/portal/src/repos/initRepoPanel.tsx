@@ -38,11 +38,6 @@ export const InitRepoPanel = (props: InitRepoPanelProps) => {
       <p>
         "Init and register" writes the files of halinka init to {path}, then registers the repo.
       </p>
-      <p className="text-muted-foreground">
-        On a runner that is not the local runner, .halinka/config.yml names the URL of this server.
-        Each person who can read the repo can see this URL. To keep it private, write server: local
-        in the file.
-      </p>
       <SelectField
         id="devcontainer"
         label="Devcontainer"

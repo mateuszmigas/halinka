@@ -1,5 +1,4 @@
 const exampleConfig = `schema_version: 1
-server: local
 devcontainer: .devcontainer/devcontainer.json
 setup:
   network: [registry.npmjs.org]
@@ -154,8 +153,8 @@ if the person accepts this. A run that GitHub starts always needs a container.
 
 ## 2. Write the files
 
-Run \`npx halinka init --server <local|url> --devcontainer <path|create|none> --yes\`. The file with this value is committed, so a URL in it is
-public in a public repo. For a GitHub repo, use \`--server local\`: only the CLI reads this value, and the server does not need it. Use the path of the existing devcontainer if the repo
+Run \`npx halinka init --devcontainer <path|create|none> --yes\`. For a local repo on a team server, add \`--server <url>\`: init then registers
+the repo on that server. The files name no server, so the same files work on each server. Use the path of the existing devcontainer if the repo
 has one. "create" writes a Node image, so for another language write a devcontainer with the tools from the CI of the repo. If you select
 "none", the runner needs \`--runs-in worktree\`, or the runs stay in the queue.
 
