@@ -5,7 +5,14 @@ workspaces, with gates, an inbox for people, and pull requests as the only way t
 
 ## Start on one machine
 
-Halinka needs Node.js 24.20 or later. In your repo, tell your coding agent: "Run `npx halinka setup` and follow it."
+Halinka needs Node.js 24.20 or later, and one of these for runs:
+
+- Docker: runs execute in a devcontainer (`init` can create one). Add the key of the agent on the Agents page of the
+  portal.
+- The command of the agent, installed and logged in: runs execute in a worktree with no sandbox
+  (`halinka start --runs-in worktree`). Use it only for a repo that you trust.
+
+In your repo, tell your coding agent: "Run `npx halinka setup` and follow it."
 
 To do the setup by hand:
 

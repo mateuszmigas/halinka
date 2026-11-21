@@ -24,6 +24,16 @@ export class HalinkaServer {
     return this;
   }
 
+  async expectOutput(text: string) {
+    await this.process.expectOutput(text);
+    return this;
+  }
+
+  async expectNoOutputAtClose(text: string) {
+    await this.process.expectNoOutputAtClose(text);
+    return this;
+  }
+
   async expectRepoConfigProblem(problem: string) {
     await this.process.expectOutput(".halinka/config.yml is not valid. start registers no repo.");
     await this.process.expectOutput(`.halinka/config.yml:${problem}`);

@@ -34,11 +34,17 @@ const parseFlags = (args: string[]) => {
   return { port: parsePort(flags.port, usage), runnerOptions: parseRunnerFlags(flags, usage) };
 };
 
+const noRepo = (reason: string, nextStep = "") => {
+  console.log(safeText(`${reason} start registers no repo.${nextStep}`));
+  return undefined;
+};
+
 const findLocalRepo = async () => {
   const root = await hostGit(process.cwd()).findRoot();
-  if (!root) return undefined;
+  if (!root) return noRepo("This folder is not in a git repository.");
   const source = await readTextFile(join(root, repoConfigPath));
-  if (source === undefined) return undefined;
+  if (source === undefined)
+    return noRepo(`${root} has no ${repoConfigPath}.`, " To add it: halinka init");
   const config = parseRepoConfig(source);
   if (!config.ok) {
     const problems = problemLines(repoConfigPath, config.problems).join("\n  ");
@@ -47,7 +53,10 @@ const findLocalRepo = async () => {
     );
     return undefined;
   }
-  return config.value.server === "local" ? root : undefined;
+  if (config.value.server !== "local") {
+    return noRepo(`${repoConfigPath} names the server ${config.value.server}.`);
+  }
+  return { root, config: config.value };
 };
 
 export const start = async (args: string[]) => {
@@ -89,11 +98,20 @@ export const start = async (args: string[]) => {
   });
 
   if (repo) {
-    const registration = await registerRepo(server.url, repo);
+    const registration = await registerRepo(server.url, repo.root);
     console.log(
       registration.ok
-        ? `registered the repo ${repo}`
-        : `did not register the repo ${repo}: ${registration.problems.map(({ reason }) => reason).join("\n")}`,
+        ? `registered the repo ${repo.root}`
+        : `did not register the repo ${repo.root}: ${registration.problems.map(({ reason }) => reason).join("\n")}`,
     );
+    if (
+      registration.ok &&
+      !repo.config.devcontainer &&
+      runnerOptions.sandboxKind === "devcontainer"
+    ) {
+      console.warn(
+        `${repoConfigPath} names no devcontainer, and the runner runs workflows in a devcontainer, so the runs of this repo stay in the queue. To run them in a worktree, add --runs-in worktree to halinka start`,
+      );
+    }
   }
 };

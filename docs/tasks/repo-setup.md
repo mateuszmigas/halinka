@@ -19,21 +19,11 @@ The text of `setup` is `apps/cli/src/setupInstructions.ts`; the person guide is 
   local host gets an App with no webhook.
 - `init --server local` for a GitHub repo tries to register the repo at the local server. Its next step ("Start Halinka
   in this repo. This registers the repo") and a warning when a local server runs and refuses do not apply to a GitHub
-  repo. The owner selects an
-  option, for example a flag `--source github` that skips the registration and prints the steps of a GitHub repo.
-- `start` says nothing when it registers no repo (`findLocalRepo` in `apps/cli/src/start.ts`): the folder is not a git
-  repo, it has no `.halinka/config.yml`, or `server` is a URL. Print one line for each, with the next action.
-- `init` in repo B before any server runs says "next: `halinka start`". A later `start` in repo A registers only A, and
-  a second `init` in B refuses. The next step of `init` must also say: when Halinka already runs in another folder,
-  `halinka run smoke` registers the repo.
+  repo. The owner selects an option, for example a flag `--source github` that skips the registration and prints the
+  steps of a GitHub repo.
 - After it registers the repo, `start` prints what the first run still needs: a key of the agent of `smoke` (for a
   devcontainer runner), then the link of the smoke workflow. The next steps of `init` name the real agent and variable,
   not `<agent> <variable>`.
-- A repo with no devcontainer and a runner in `devcontainer` mode: the run stays in the queue. `start` warns at once and
-  names `--runs-in worktree`.
-- The Docker messages (`packages/runner/src/capabilities.ts`, `packages/server/src/waitReason.ts`) name the remedy:
-  start Docker, or start again with `--runs-in worktree` (the agent command installed and logged in).
-- `README.md` names only Node. Add Docker for devcontainer runs, or an agent command with a login for worktree runs.
 
 ## Nice to have
 

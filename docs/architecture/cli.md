@@ -67,7 +67,10 @@ writes only the first; `start`, `server` and `runner` write only the second.
 - Both take `$HALINKA_HOME/server.lock` before they open the database, and write their URL to `server.json`. A stop
   removes the file; after a crash it stays until the next start.
 - `start` inside a repo with `server: local` registers that repo. `start` prints the problems of a
-  `.halinka/config.yml` that is not valid, as `check` does, and does not register the repo.
+  `.halinka/config.yml` that is not valid, as `check` does, and does not register the repo. It also prints one line
+  when it registers no repo for another reason (no git repo, no `.halinka/config.yml`, a server URL). After it
+  registers the repo, it warns when the repo has no devcontainer and the runner runs in a devcontainer: the runs of
+  the repo stay in the queue.
 - Ctrl+C, SIGTERM and SIGHUP stop gracefully ([runners.md](runners.md#supervisor)).
 - Login: set all of `HALINKA_PUBLIC_URL`, `HALINKA_AUTH_SECRET`, `HALINKA_GITHUB_CLIENT_ID`,
   `HALINKA_GITHUB_CLIENT_SECRET` and `HALINKA_ADMIN_GITHUB`, or none. `start` never has a login. A runner must connect

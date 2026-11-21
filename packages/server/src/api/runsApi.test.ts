@@ -1182,7 +1182,7 @@ describe("GET /api/runs/{id}", () => {
     await plane.sync({ held: [], capacity: 0, capabilities: noDocker });
 
     expect((await api.runs.get({ id: 1 })).waitReason).toBe(
-      "Docker is not available on the runner local",
+      "Docker is not available on the runner local. Make Docker available there",
     );
   });
 
@@ -1192,7 +1192,7 @@ describe("GET /api/runs/{id}", () => {
     await plane.sync({ held: [], capacity: 0, capabilities: devcontainerRunner });
 
     expect((await api.runs.get({ id: 1 })).waitReason).toBe(
-      "The runner local runs workflows in a devcontainer, and the repo has no devcontainer in .halinka/config.yml",
+      "The runner local runs workflows in a devcontainer, and the repo has no devcontainer in .halinka/config.yml. Add one, then start the run again",
     );
   });
 

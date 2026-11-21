@@ -38,6 +38,74 @@ test.describe("halinka start", () => {
     await server.expectRepoConfigProblem("1:1 This file is from an older Halinka.");
   });
 
+  test("says that it registers no repo in a repo without .halinka", async ({ halinka }) => {
+    const repo = await halinka.createRepo();
+
+    const server = await halinka.start([], repo.path);
+
+    await server.expectOutput(`${repo.path} has no .halinka/config.yml. start registers no repo.`);
+  });
+
+  test("says that it registers no repo of another server", async ({ halinka }) => {
+    const repo = await halinka.createRepo({
+      ".halinka/config.yml": "schema_version: 1\nserver: https://halinka.example.com\n",
+    });
+
+    const server = await halinka.start([], repo.path);
+
+    await server.expectOutput(
+      "names the server https://halinka.example.com. start registers no repo.",
+    );
+  });
+
+  test("warns when the repo has no devcontainer and the runner runs in one", async ({
+    halinka,
+  }) => {
+    const repo = await halinka.createRepo({
+      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+    });
+
+    const server = await halinka.start(["--runs-in", "devcontainer"], repo.path);
+
+    await server.expectOutput(
+      "names no devcontainer, and the runner runs workflows in a devcontainer",
+    );
+  });
+
+  test("registers the repo when it has no devcontainer and the runner runs in one", async ({
+    halinka,
+  }) => {
+    const repo = await halinka.createRepo({
+      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+    });
+
+    const server = await halinka.start(["--runs-in", "devcontainer"], repo.path);
+
+    await server.expectRepoRegistered(repo.path);
+  });
+
+  test("does not warn of a missing devcontainer when the runner runs in a worktree", async ({
+    halinka,
+  }) => {
+    const repo = await halinka.createRepo({
+      ".halinka/config.yml": "schema_version: 1\nserver: local\n",
+    });
+    const server = await halinka.start([], repo.path);
+    await server.expectRepoRegistered(repo.path);
+
+    await server.stop();
+
+    await server.expectNoOutputAtClose("names no devcontainer");
+  });
+
+  test("says that it registers no repo outside a git repo", async ({ halinka }) => {
+    const folder = await halinka.createFolder();
+
+    const server = await halinka.start([], folder);
+
+    await server.expectOutput("This folder is not in a git repository. start registers no repo.");
+  });
+
   test("starts again on the same database", async ({ halinka }) => {
     await (await halinka.start()).stop();
     const server = await halinka.start();

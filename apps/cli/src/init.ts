@@ -162,7 +162,7 @@ export const init = async (args: string[]) => {
   if (!registration.ok) {
     steps.push(
       server === "local"
-        ? `Start Halinka in this repo. This registers the repo: halinka start${runsIn}`
+        ? `Start Halinka in this repo. This registers the repo: halinka start${runsIn}. If Halinka runs in another folder, halinka run smoke in this repo registers it`
         : `For a repo that the server reads from GitHub: commit these files, and merge them to the default branch. For a local repo: make this machine a runner, and ask an Admin to approve it: halinka runner --server ${server}${runsIn}. Then halinka run registers the repo`,
     );
   }

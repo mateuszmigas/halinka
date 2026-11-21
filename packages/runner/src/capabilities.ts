@@ -54,6 +54,8 @@ export const warnOnDockerChange = (
   const hasDocker = hasDockerOf(after);
   if (hasDocker === undefined || hasDocker === hasDockerOf(before)) return;
   if (!hasDocker)
-    console.warn("Docker is not available. The runner takes no runs until Docker runs.");
+    console.warn(
+      "Docker is not available. The runner takes no runs until Docker runs. Make Docker available. A runner with --runs-in worktree needs no Docker, but it has no sandbox, it takes only runs that a person starts, and the command of each agent must be installed and logged in.",
+    );
   else if (before) console.log("Docker is available. The runner takes runs again.");
 };

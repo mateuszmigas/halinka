@@ -62,9 +62,10 @@ const capabilityRefusalReason = (
   if (refusal === "sandbox_kind") {
     return `The run keeps a workspace in a ${runSandboxKind}, and the runner ${name} runs workflows in a ${runnerSandboxKind}. Remove the workspace of the run`;
   }
-  if (refusal === "docker") return `Docker is not available on the runner ${name}`;
+  if (refusal === "docker")
+    return `Docker is not available on the runner ${name}. Make Docker available there`;
   if (refusal === "devcontainer_file") {
-    return `The runner ${name} runs workflows in a devcontainer, and the repo has no devcontainer in ${repoConfigPath}`;
+    return `The runner ${name} runs workflows in a devcontainer, and the repo has no devcontainer in ${repoConfigPath}. Add one, then start the run again`;
   }
   if (refusal === "setup_secrets") {
     return `The runner ${name} runs workflows in a worktree, and only a container gets the secrets of setup`;
