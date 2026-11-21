@@ -10,6 +10,7 @@ import { parseRepoConfig, repoConfigPath } from "@halinka/workflow";
 
 import { parseCommandArgs, portFlag, parsePort, parseRunnerFlags, runnerFlags } from "./args";
 import { problemLines } from "./definitionFiles";
+import { firstRunSteps } from "./firstRunSteps";
 import { LocalServer } from "./localServer";
 import { registerRepo } from "./registerRepo";
 import { startRunner, warnOfWorktree } from "./runnerStart";
@@ -99,19 +100,25 @@ export const start = async (args: string[]) => {
 
   if (repo) {
     const registration = await registerRepo(server.url, repo.root);
-    console.log(
-      registration.ok
-        ? `registered the repo ${repo.root}`
-        : `did not register the repo ${repo.root}: ${registration.problems.map(({ reason }) => reason).join("\n")}`,
-    );
-    if (
-      registration.ok &&
-      !repo.config.devcontainer &&
-      runnerOptions.sandboxKind === "devcontainer"
-    ) {
+    if (!registration.ok) {
+      const reasons = registration.problems.map(({ reason }) => reason).join("\n");
+      console.log(`did not register the repo ${repo.root}: ${reasons}`);
+      return;
+    }
+    console.log(`registered the repo ${repo.root}`);
+    const { sandboxKind } = runnerOptions;
+    if (!repo.config.devcontainer && sandboxKind === "devcontainer") {
       console.warn(
         `${repoConfigPath} names no devcontainer, and the runner runs workflows in a devcontainer, so the runs of this repo stay in the queue. To run them in a worktree, add --runs-in worktree to halinka start`,
       );
+      return;
     }
+    const steps = await firstRunSteps({
+      server: server.url,
+      repoId: registration.value,
+      root: repo.root,
+      sandboxKind,
+    }).catch(() => []);
+    if (steps.length > 0) console.log(safeText(`Next steps:\n  ${steps.join("\n  ")}`));
   }
 };

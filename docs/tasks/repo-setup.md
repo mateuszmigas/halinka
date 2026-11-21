@@ -5,15 +5,8 @@ The text of `setup` is `apps/cli/src/setupInstructions.ts`; the person guide is 
 
 ## To do
 
-- "Use only the fields in the examples" blocks fields that a normal workflow needs. The example workflow has no shell
-  step, no `network`, and no `cron`, so an agent that obeys the rule cannot write a workflow that updates packages on a
-  schedule. Add these to the examples (for example one gate with `network`), or change the rule.
-- Step 3 of `setup` says: run `setup.run`, then each gate. It does not say to run the lifecycle commands first
-  (`postCreateCommand` and the others), but they also use `setup.network`.
-- The error of an identifier does not name the field or the value: `issue-to-pr.yml:42:13 Start with a letter…` for the
-  gate name `unit-tests` (`identifierHint` in `packages/workflow/src/identifier.ts`). Name the field and the value.
-  Allowing `-` is an owner decision: the built-in gate `non-empty-diff` uses it, so a gate of the file could take that
-  name.
+- Allow `-` in an identifier (for example the gate name `unit-tests`): the owner decides. The built-in gate
+  `non-empty-diff` uses `-`, so a gate of the file could then take that name.
 - A local server with a GitHub repo is not described. Step 1 of `setup` allows it, but steps 4 and 5 assume "local"
   means a repo on this machine and a team server means GitHub. [setup.md](../user/setup.md) says that a server on a
   local host gets an App with no webhook.
@@ -21,11 +14,13 @@ The text of `setup` is `apps/cli/src/setupInstructions.ts`; the person guide is 
   in this repo. This registers the repo") and a warning when a local server runs and refuses do not apply to a GitHub
   repo. The owner selects an option, for example a flag `--source github` that skips the registration and prints the
   steps of a GitHub repo.
-- After it registers the repo, `start` prints what the first run still needs: a key of the agent of `smoke` (for a
-  devcontainer runner), then the link of the smoke workflow. The next steps of `init` name the real agent and variable,
-  not `<agent> <variable>`.
 
 ## Nice to have
+
+- The server tells which agents of a workflow have no key, so that the portal and run start can show it. Today only
+  `firstRunSteps` of `start` knows it, and it reads the team keys and the environment of its own process.
+- One module of portal links for the CLI: `run.ts` and `firstRunSteps.ts` build `/runs/<id>`, `/agents` and
+  `/repos/<id>/workflows/<file>` by hand, so a rename of a route in `apps/portal/src/router.tsx` breaks them.
 
 - `halinka check --run`: build the devcontainer, run the lifecycle commands and `setup.run` with the network allowlist
   of the sandbox, run the gates offline, and list the refused hosts. The agent did this by hand with Docker, and it was

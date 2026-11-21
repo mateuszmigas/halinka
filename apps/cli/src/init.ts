@@ -1,11 +1,12 @@
 import { join, relative, resolve } from "node:path";
 
 import { cancel, intro, isCancel, log, note, outro, select, text } from "@clack/prompts";
+import { agentPresets } from "@halinka/presets";
 import { findDevcontainers, setUpRepo } from "@halinka/runner/repoSetup";
 import { errorMessage } from "@halinka/utils/errors";
 import { pathExists } from "@halinka/utils/fs";
 import { isServerUrl, serverUrlHint } from "@halinka/utils/serverUrl";
-import { newDevcontainerPath } from "@halinka/workflow";
+import { newDevcontainerPath, smokeAgent } from "@halinka/workflow";
 
 import { fail as exit, failWithUsage, parseCommandArgs } from "./args";
 import { findRepoRoot } from "./findRepoRoot";
@@ -18,6 +19,10 @@ Options:
   --server <local|url>               The server that this repo uses
   --devcontainer <path|create|none>  The devcontainer that workflows use
   --yes                              Use the default for each value that you do not give`;
+
+const smokeVariables = agentPresets[smokeAgent].credentials
+  .map(({ variable }) => variable)
+  .join("|");
 
 const serverOptions: ServerOptions = { usage, sends: "the path of the repo" };
 
@@ -168,7 +173,7 @@ export const init = async (args: string[]) => {
   }
   if (devcontainer) {
     steps.push(
-      "Give your agent credentials for devcontainer runs: the Agents page of the portal, or halinka agent key <agent> <variable>",
+      `Add a key of ${smokeAgent}, the agent of the smoke workflow: the Agents page of the portal, or halinka agent key ${smokeAgent} <${smokeVariables}>`,
     );
   }
   steps.push("Open the portal and run the smoke workflow");

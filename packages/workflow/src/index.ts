@@ -45,6 +45,7 @@ export {
   createRepoConfig,
   createSmokeWorkflow,
   newDevcontainerPath,
+  smokeAgent,
   smokePath,
 } from "./repoScaffold";
 export { isRunnerLabel, runnerLabelHint } from "./runnerLabels";

@@ -70,7 +70,9 @@ writes only the first; `start`, `server` and `runner` write only the second.
   `.halinka/config.yml` that is not valid, as `check` does, and does not register the repo. It also prints one line
   when it registers no repo for another reason (no git repo, no `.halinka/config.yml`, a server URL). After it
   registers the repo, it warns when the repo has no devcontainer and the runner runs in a devcontainer: the runs of
-  the repo stay in the queue.
+  the repo stay in the queue. Else, while the repo has no run, it prints the next steps (`firstRunSteps`): a key for
+  each agent of `smoke.yml` with no team key and no key in the environment (for a devcontainer runner), then the link
+  of the smoke workflow.
 - Ctrl+C, SIGTERM and SIGHUP stop gracefully ([runners.md](runners.md#supervisor)).
 - Login: set all of `HALINKA_PUBLIC_URL`, `HALINKA_AUTH_SECRET`, `HALINKA_GITHUB_CLIENT_ID`,
   `HALINKA_GITHUB_CLIENT_SECRET` and `HALINKA_ADMIN_GITHUB`, or none. `start` never has a login. A runner must connect

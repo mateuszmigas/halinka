@@ -98,6 +98,96 @@ test.describe("halinka start", () => {
     await server.expectNoOutputAtClose("names no devcontainer");
   });
 
+  test("names the missing key of the smoke agent in a new repo", async ({ halinka }) => {
+    halinka.setEnv("ANTHROPIC_API_KEY", "");
+    halinka.setEnv("CLAUDE_CODE_OAUTH_TOKEN", "");
+    const repo = await halinka.createRepo();
+    await halinka.init(repo, ["--yes"]).expectExit(0);
+
+    const server = await halinka.start(["--runs-in", "devcontainer"], repo.path);
+
+    await server.expectOutput(`Add a key of claude-code on the Agents page: ${server.url}/agents`);
+  });
+
+  test("links the smoke workflow of a new repo", async ({ halinka }) => {
+    const repo = await halinka.createRepo();
+    await halinka.init(repo, ["--server", "local", "--devcontainer", "none"]).expectExit(0);
+
+    const server = await halinka.start([], repo.path);
+
+    await server.expectOutput(
+      `Start the smoke workflow: ${server.url}/repos/1/workflows/smoke.yml`,
+    );
+  });
+
+  test("names no key of an agent that has a key", async ({ halinka }) => {
+    halinka.setEnv("ANTHROPIC_API_KEY", "");
+    halinka.setEnv("CLAUDE_CODE_OAUTH_TOKEN", "");
+    const repo = await halinka.createRepo();
+    await halinka.init(repo, ["--yes"]).expectExit(0);
+    const first = await halinka.start(["--runs-in", "devcontainer"], repo.path);
+    await first.expectRepoRegistered(repo.path);
+    const key = ["agent", "key", "claude-code", "ANTHROPIC_API_KEY"];
+    await halinka.run(key).input("sk-ant-api03-made-up-value").expectExit(0);
+    await first.stop();
+
+    const server = await halinka.start(["--runs-in", "devcontainer"], repo.path);
+    await server.expectOutput("Start the smoke workflow");
+    await server.stop();
+
+    await server.expectNoOutputAtClose("Add a key");
+  });
+
+  test("names no key for a runner in a worktree", async ({ halinka }) => {
+    const repo = await halinka.createRepo();
+    await halinka.init(repo, ["--yes"]).expectExit(0);
+    const server = await halinka.start([], repo.path);
+    await server.expectOutput("Start the smoke workflow");
+
+    await server.stop();
+
+    await server.expectNoOutputAtClose("Add a key");
+  });
+
+  test("names no key of an agent with a key in the environment", async ({ halinka }) => {
+    halinka.setEnv("ANTHROPIC_API_KEY", "sk-ant-api03-made-up-value");
+    const repo = await halinka.createRepo();
+    await halinka.init(repo, ["--yes"]).expectExit(0);
+    const server = await halinka.start(["--runs-in", "devcontainer"], repo.path);
+    await server.expectOutput("Start the smoke workflow");
+
+    await server.stop();
+
+    await server.expectNoOutputAtClose("Add a key");
+  });
+
+  test("gives no next steps after the warning of a missing devcontainer", async ({ halinka }) => {
+    const repo = await halinka.createRepo();
+    await halinka.init(repo, ["--server", "local", "--devcontainer", "none"]).expectExit(0);
+    const server = await halinka.start(["--runs-in", "devcontainer"], repo.path);
+    await server.expectOutput("names no devcontainer");
+
+    await server.stop();
+
+    await server.expectNoOutputAtClose("Next steps");
+  });
+
+  test("gives no next steps when the repo has a run", async ({ halinka }) => {
+    await halinka.installFakeAgent("claude-code");
+    const repo = await halinka.createRepo();
+    await halinka.init(repo, ["--server", "local", "--devcontainer", "none"]).expectExit(0);
+    const first = await halinka.start([], repo.path);
+    await first.expectRepoRegistered(repo.path);
+    expect((await first.post("/api/runs", { repoId: 1, workflow: "smoke" })).status).toBe(201);
+    await first.stop();
+    const server = await halinka.start([], repo.path);
+    await server.expectRepoRegistered(repo.path);
+
+    await server.stop();
+
+    await server.expectNoOutputAtClose("Next steps");
+  });
+
   test("says that it registers no repo outside a git repo", async ({ halinka }) => {
     const folder = await halinka.createFolder();
 

@@ -1,7 +1,7 @@
 import { isRecord } from "@halinka/utils/isRecord";
 import { z } from "zod";
 
-import { identifierHint, isIdentifier } from "./identifier";
+import { identifierMessage, isIdentifier } from "./identifier";
 
 export const reportServerName = "halinka";
 
@@ -47,7 +47,7 @@ const checkNames = (
   const seen = new Set<unknown>();
   for (const [key, name] of names) {
     if (typeof name !== "string") addIssue([...path, key], "Use a string");
-    else if (!isIdentifier(name)) addIssue([...path, key], identifierHint);
+    else if (!isIdentifier(name)) addIssue([...path, key], identifierMessage(name));
     else if (seen.has(name)) addIssue([...path, key], `The ${term} "${name}" is already used`);
     seen.add(name);
   }

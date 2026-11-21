@@ -79,6 +79,16 @@ test.describe("halinka init", () => {
     await cli.expectOutput("did not register the repo");
   });
 
+  test("names the key command of the smoke agent", async ({ halinka }) => {
+    const repo = await halinka.createRepo();
+
+    const cli = await halinka.init(repo, ["--yes"]).expectExit(0);
+
+    // The note box wraps the command after the agent.
+    await cli.expectOutput("halinka agent key claude-code");
+    await cli.expectOutput("<ANTHROPIC_API_KEY|CLAUDE_CODE_OAUTH_TOKEN>");
+  });
+
   test("refuses http to another machine", async ({ halinka }) => {
     const repo = await halinka.createRepo();
 

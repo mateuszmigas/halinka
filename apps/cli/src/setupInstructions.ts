@@ -77,6 +77,49 @@ steps:
     closes: \${{ inputs.issue_number }}
 `;
 
+const exampleScheduledWorkflow = `schema_version: 1
+name: Update packages
+
+# Only for a GitHub repo.
+on:
+  cron:
+    schedule: "0 6 * * 1"
+
+max_cost_usd: 5
+
+steps:
+  - id: update
+    type: shell
+    run: pnpm update --recursive
+    network: [registry.npmjs.org]
+    timeout: 10m
+
+  - id: fix
+    type: agent
+    agent: claude-code
+    prompt: |
+      The update step updated the packages. Fix the code that the update broke. If nothing broke, change nothing.
+      Write your summary as the text of the pull request: the packages that changed, and what you fixed.
+    require_changes: false
+    gates:
+      - name: build
+        run: pnpm build
+      - name: audit
+        run: pnpm audit --audit-level high
+        network: [registry.npmjs.org]
+        on_fail: ask_human
+
+  - id: approve
+    type: approval
+    message: Review the update of the packages.
+
+  - id: open_pr
+    type: github
+    action: open_pull_request
+    title: Update packages
+    body: \${{ steps.fix.summary }}
+`;
+
 export const setupInstructions = `# Set up Halinka in this repo
 
 You are a coding agent, and a person asked you to set up Halinka. Follow these steps in order. When a step says "Person", give the person
@@ -135,11 +178,17 @@ Example of a file in .halinka/workflows/:
 \`\`\`yaml
 ${exampleWorkflow}\`\`\`
 
+Example of a scheduled workflow with a shell step and network:
+
+\`\`\`yaml
+${exampleScheduledWorkflow}\`\`\`
+
 ## 3. Test the files
 
 - Run \`npx halinka check\` until it passes. It checks only the files. It does not check keys, runners or secrets.
 - If Docker is here, test in the image of the devcontainer, as the user of that image, because an image often has other tool versions than CI.
-  Run \`setup.run\`, then run each gate. If a gate names no \`network\` and no Compose service, first disconnect the network of the container.
+  Run the lifecycle commands of the devcontainer (\`onCreateCommand\`, \`postCreateCommand\` and the others) and \`setup.run\`, with only the
+  hosts of \`setup.network\`. Then run each gate. If a gate names no \`network\` and no Compose service, first disconnect the network of the container.
   Remove the container after the test.
 
 ## 4. Repo that stays on this machine

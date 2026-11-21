@@ -4,8 +4,8 @@ import { describe, expect, it } from "vitest";
 
 import { setupInstructions } from "./setupInstructions";
 
-const [config = "", workflow = ""] = [...setupInstructions.matchAll(/```yaml\n(.*?)```/gs)].map(
-  (block) => block[1],
+const [config = "", ...workflows] = [...setupInstructions.matchAll(/```yaml\n(.*?)```/gs)].map(
+  (block) => block[1] ?? "",
 );
 
 describe("setupInstructions", () => {
@@ -13,7 +13,10 @@ describe("setupInstructions", () => {
     expect(parseRepoConfig(config)).toMatchObject({ ok: true });
   });
 
-  it("has a workflow example that the parser accepts", () => {
-    expect(parseWorkflow(workflow, { agents: agentPresets })).toMatchObject({ ok: true });
-  });
+  it.each(workflows.map((workflow, index) => [index + 1, workflow]))(
+    "has a workflow example %i that the parser accepts",
+    (_, workflow) => {
+      expect(parseWorkflow(workflow, { agents: agentPresets })).toMatchObject({ ok: true });
+    },
+  );
 });

@@ -569,7 +569,7 @@ describe("parseWorkflow", () => {
         line: 7,
         column: 25,
         path: ["steps", 0, "outcomes", 1],
-        message: "Start with a letter. Use only lowercase letters, digits and underscores",
+        message: `"Reject" is not a valid name. Start with a letter, and use only lowercase letters, digits and underscores, for example "reject"`,
       },
     ]);
     expect(map).toEqual([
@@ -577,7 +577,7 @@ describe("parseWorkflow", () => {
         line: 7,
         column: 17,
         path: ["steps", 0, "outcomes", "Done"],
-        message: "Start with a letter. Use only lowercase letters, digits and underscores",
+        message: `"Done" is not a valid name. Start with a letter, and use only lowercase letters, digits and underscores, for example "done"`,
       },
     ]);
   });
@@ -709,7 +709,7 @@ describe("parseWorkflow", () => {
     ]);
 
     expect(problems.map((problem) => problem.message)).toEqual([
-      "Start with a letter. Use only lowercase letters, digits and underscores",
+      `"Body" is not a valid name. Start with a letter, and use only lowercase letters, digits and underscores, for example "body"`,
     ]);
   });
 
@@ -2241,11 +2241,19 @@ describe("parseWorkflow", () => {
     ]);
   });
 
+  it("gives no example for an id without a letter", () => {
+    const problems = problemsOf(["name: Build", "steps:", "  - { id: '1', type: shell, run: ls }"]);
+
+    expect(problems.map((problem) => problem.message)).toEqual([
+      `"1" is not a valid name. Start with a letter, and use only lowercase letters, digits and underscores`,
+    ]);
+  });
+
   it("refuses blank text, invalid ids and an empty step list", () => {
     const blank = ["name: ' '", "steps:", "  - id: Build-1", "    type: shell", "    run: ''"];
     expect(problemsOf(blank).map((problem) => problem.message)).toEqual([
       "Must not be empty",
-      "Start with a letter. Use only lowercase letters, digits and underscores",
+      `"Build-1" is not a valid name. Start with a letter, and use only lowercase letters, digits and underscores, for example "build_1"`,
       "Must not be empty",
     ]);
     expect(problemsOf(["name: Build", "steps: []"])).toEqual([

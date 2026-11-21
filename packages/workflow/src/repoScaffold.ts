@@ -4,6 +4,7 @@ import type { RepoConfig } from "./repoConfig";
 import { schemaVersion } from "./schemaVersion";
 
 export const smokePath = ".halinka/workflows/smoke.yml";
+export const smokeAgent = "claude-code";
 export const newDevcontainerPath = ".devcontainer/devcontainer.json";
 
 export const createRepoConfig = (config: RepoConfig) =>
@@ -22,7 +23,7 @@ export const createSmokeWorkflow = () =>
       {
         id: "agent",
         type: "agent",
-        agent: "claude-code",
+        agent: smokeAgent,
         permissions: { write: false },
         prompt: "Read this repository. Report a summary of the project in one sentence.",
       },
