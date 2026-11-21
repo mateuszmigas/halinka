@@ -1,6 +1,6 @@
 {
   "name": "halinka",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "protocolVersion": 21,
   "composeVersion": 1,
   "description": "Self-hostable agent orchestration for the software development lifecycle",
