@@ -148,9 +148,12 @@ export const init = async (args: string[]) => {
 
   const registration = await registerRepo(serverUrl, root);
   if (registration.ok) log.success(`Registered the repo on ${server}`);
-  // The next steps say how to make this machine a runner.
-  else if (registration.problems[0]?.kind === "refused") {
-    log.warn(`${server} did not register the repo: ${registration.problems[0].reason}`);
+  else {
+    const [problem] = registration.problems;
+    const isCoveredByNextSteps =
+      problem?.kind === "no_runner_key" || (server === "local" && problem?.kind === "unreachable");
+    if (problem && !isCoveredByNextSteps)
+      log.warn(`${server} did not register the repo: ${problem.reason}`);
   }
 
   const runsIn = devcontainer ? "" : " --runs-in worktree";

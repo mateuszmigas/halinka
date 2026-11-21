@@ -1,4 +1,6 @@
 import { randomBytes } from "node:crypto";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 
 import { testBuild } from "@halinka/protocol/testing";
 import { loadOrCreateRunnerKey } from "@halinka/runner/runnerKey";
@@ -39,6 +41,37 @@ describe("registerRepo", () => {
         },
       ],
     });
+  });
+
+  it("tells apart a server that does not answer", async () => {
+    const { home, server } = await setUp();
+    await loadOrCreateRunnerKey(home);
+    const { url } = server;
+    await server.stop();
+
+    const registration = await registerRepo(url, "/code/app");
+
+    expect(registration).toEqual({
+      ok: false,
+      problems: [
+        { kind: "unreachable", reason: `${url} did not answer. Check that the server runs.` },
+      ],
+    });
+  });
+
+  it("counts an answer that is not valid as a refusal", async () => {
+    const { home } = await setUp();
+    await loadOrCreateRunnerKey(home);
+    const other = createServer((_request, response) => response.end("<html></html>"));
+    await new Promise<void>((resolve) => other.listen(0, "127.0.0.1", resolve));
+    onTestFinished(() => {
+      other.close();
+    });
+    const { port } = other.address() as AddressInfo;
+
+    const registration = await registerRepo(`http://127.0.0.1:${port}`, "/code/app");
+
+    expect(registration.ok || registration.problems[0]?.kind).toBe("refused");
   });
 
   it("gives a hint when the server does not know the runner key of this machine", async () => {

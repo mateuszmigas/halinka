@@ -31,8 +31,9 @@ writes only the first; `start`, `server` and `runner` write only the second.
 - `init` works in a git repo without `.halinka/`. It writes `.halinka/config.yml`, `.halinka/workflows/smoke.yml` and,
   with `--devcontainer create`, `.devcontainer/devcontainer.json`. It writes all files or none. The portal writes the
   same files (`@halinka/runner/repoSetup`). `init` registers the repo when this machine has a runner key and the server
-  answers. It prints the reason of a refusal; without a key, the next steps say how to make the machine a runner. It
-  never creates a key or starts a process. With a URL that is not loopback as the server, it warns
+  answers. It prints the reason when the registration fails, but not when the next steps already say what to do:
+  without a key, they say how to make the machine a runner; with `local` and a refused connection, they say
+  `halinka start`, which registers the repo. It never creates a key or starts a process. With a URL that is not loopback as the server, it warns
   that the committed `config.yml` names that server.
 - `check` parses `.halinka/` with the parsers and presets of the installed CLI, and checks that the devcontainer file
   exists. It needs no server. A parser problem prints as `path:line:column message`. Any problem gives exit code 1.
@@ -146,6 +147,9 @@ Flags of `start` and `runner`:
 
 ## Decisions
 
+- `init` then `start` for a local trial, and `init` prints no warning when the local server does not answer yet.
+  Rejected: `start` asks the `init` questions (it breaks the split of repo and instance configuration, and `start`
+  needs the flags of `init`); no registration in `init` (it registers the repo when `start` already runs).
 - One server resolver for all commands. Rejected: a server check in each command (six variants; `init` and `logout`
   sent a path and a token over `http` with no check).
 - The CLI reads the current folder, and the root scripts run `node --import tsx apps/cli/src/main.ts`, so the root has

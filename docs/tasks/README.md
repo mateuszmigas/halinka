@@ -9,6 +9,11 @@ this order:
 
 When a task is done, delete its file and its line here. A new task gets a file and a line in its group.
 
+## To do
+
+- [repo-setup](repo-setup.md): fixes from the first real setup of a GitHub repo.
+- [website-docs](website-docs.md): the user docs on the website.
+
 ## Checks
 
 - [releases](releases.md): a rerun after a failed npm step, and the GitHub login of an installed build.

@@ -56,6 +56,29 @@ test.describe("halinka init", () => {
     await cli.expectNoOutputAtClose("did not register the repo");
   });
 
+  test("does not warn when the local server does not run", async ({ halinka }) => {
+    await (await halinka.start()).crash();
+    const repo = await halinka.createRepo();
+
+    const cli = await halinka
+      .init(repo, ["--server", "local", "--devcontainer", "none"])
+      .expectExit(0);
+
+    await cli.expectNoOutputAtClose("did not register the repo");
+  });
+
+  test("warns when a server given as a URL does not answer", async ({ halinka }) => {
+    const server = await halinka.start();
+    await server.crash();
+    const repo = await halinka.createRepo();
+
+    const cli = await halinka
+      .init(repo, ["--server", server.url, "--devcontainer", "none"])
+      .expectExit(0);
+
+    await cli.expectOutput("did not register the repo");
+  });
+
   test("refuses http to another machine", async ({ halinka }) => {
     const repo = await halinka.createRepo();
 
